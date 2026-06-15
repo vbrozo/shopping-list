@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "16";
+const APP_VERSION = "17";
 
 // ── Dućani (uredivi u Postavkama; spremaju se u Firestore) ─────
 const DEFAULT_STORES = ["Konzum", "DM", "Lidl", "Tvornica Zdrave Hrane"];
@@ -48,6 +48,7 @@ const els = {
   newStoreInput: $("new-store-input"),
   nameForm: $("name-form"),
   nameInput: $("name-input"),
+  nameSubmit: $("name-submit"),
   refreshBtn: $("refresh-btn"),
   appVer: $("app-ver"),
   form: $("add-form"),
@@ -169,6 +170,7 @@ let groupByStore = localStorage.getItem("groupByStore") === "1";
 let userName = localStorage.getItem("userName") || "";
 let storesTouched = false; // je li korisnik ručno mijenjao dućane u formi
 let allNames = []; // svi poznati nazivi (za prijedloge pri tipkanju)
+let nameEditing = false; // je li polje imena trenutno u načinu uređivanja
 const newStores = new Set();
 
 // ── Pomoćne ────────────────────────────────────────────────────
@@ -611,8 +613,11 @@ function renderSettings() {
       `<li class="item"><div class="item-body"><div class="item-name">${esc(s)}</div></div>
          <button class="btn-del" data-act="store-del" data-store="${esc(s)}" aria-label="Obriši">×</button></li>`
   ).join("");
-  // Ime
+  // Ime — kad je spremljeno, polje je zaključano, a gumb piše "Uredi"
   els.nameInput.value = userName;
+  const locked = !!userName && !nameEditing;
+  els.nameInput.disabled = locked;
+  els.nameSubmit.textContent = locked ? "Uredi" : "Spremi";
 }
 
 // Spremi listu dućana u Firestore (zajednički)
@@ -980,12 +985,20 @@ if (configured) {
     addStore(els.newStoreInput.value);
     els.newStoreInput.value = "";
   });
-  // Spremanje imena
+  // Ime: ako je spremljeno -> "Uredi" otključa polje; inače "Spremi" sprema
   els.nameForm.addEventListener("submit", (e) => {
     e.preventDefault();
+    if (userName && !nameEditing) {
+      nameEditing = true;
+      renderSettings();
+      els.nameInput.focus();
+      return;
+    }
     userName = els.nameInput.value.trim();
     localStorage.setItem("userName", userName);
+    nameEditing = false;
     toast(userName ? `Spremljeno: ${userName} 👋` : "Ime uklonjeno");
+    renderSettings();
   });
 
   // Otkrivanje detalja (dućan/količina)
