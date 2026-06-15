@@ -39,14 +39,15 @@
             list="suggestions"
             required />
           <button type="button" id="mic-btn" class="btn-mic" aria-label="Glasovni unos">🎤</button>
+          <button type="submit" class="btn-add" aria-label="Dodaj">➕</button>
         </div>
         <datalist id="suggestions"></datalist>
-        <input id="qty-input" class="qty-input" type="text" placeholder="Količina (npr. 2 ili 1 kg) — nije obavezno" autocomplete="off" />
-        <div class="store-picker-wrap">
+        <button type="button" id="details-toggle" class="details-toggle">🏪 Dućan i količina</button>
+        <div id="add-details" class="add-details hidden">
+          <input id="qty-input" class="qty-input" type="text" placeholder="Količina (npr. 2 ili 1 kg)" autocomplete="off" />
           <span class="picker-label">Dućan (može više):</span>
           <div id="store-picker" class="store-picker"></div>
         </div>
-        <button type="submit" class="btn-add" aria-label="Dodaj">➕ Dodaj</button>
       </form>
 
       <!-- Brzi unos na temelju prijašnjih kupovina -->
@@ -75,9 +76,8 @@
       <section id="bought-section" class="hidden">
         <div class="section-header">
           <h2 class="section-title">Kupljeno <span id="bought-count" class="count">0</span></h2>
-          <button id="clear-bought" class="btn-text">Spremi u povijest ✓</button>
+          <button id="clear-bought" class="btn-save">📦 Spremi u povijest</button>
         </div>
-        <p class="hint">Dodirni 💰 da upišeš cijenu. „Spremi u povijest" arhivira kupljeno (s datumom/dućanom/cijenom).</p>
         <ul id="bought-list" class="list bought"></ul>
       </section>
     </div>
@@ -120,7 +120,19 @@
     </div>
   </div>
 
-  <script src="config.js?v=7"></script>
-  <script type="module" src="app.js?v=7"></script>
+  <!-- ══════════ BOTTOM-SHEET: brzi unos vrijednosti ══════════ -->
+  <div id="input-sheet" class="modal hidden">
+    <div class="modal-card">
+      <h2 id="sheet-title"></h2>
+      <input id="sheet-input" class="sheet-input" type="text" autocomplete="off" />
+      <div class="modal-actions">
+        <button id="sheet-cancel" class="btn-text">Odustani</button>
+        <button id="sheet-ok" class="btn-add">Spremi ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js?v=8"></script>
+  <script type="module" src="app.js?v=8"></script>
 </body>
 </html>

@@ -15,6 +15,8 @@ a hosta se besplatno na GitHub Pages.
 - 🎤 Glasovni unos — npr. „Dodaj kruh i mlijeko"; prepoznaje i dućan, npr. „mlijeko iz Konzuma" → stavka „mlijeko" + dućan „Konzum" (Web Speech API, hr-HR; Chrome/Safari)
 - 👈 Povuci stavku ulijevo za brisanje + „Poništi"
 - 👤 Oznaka tko je dodao / kupio (ime se postavlja gumbom u zaglavlju)
+- 👆 Dodir na cijeli redak označava kupljeno; uređivanje cijene/količine kroz bottom-sheet
+- 🌙 Tamni način (automatski po postavkama sustava)
 - 🔄 Sinkronizacija uživo između telefona
 - 📲 Radi offline (service worker) i instalira se na početni ekran (PWA)
 

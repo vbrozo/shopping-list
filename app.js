@@ -34,9 +34,16 @@ const els = {
   itemInput: $("item-input"),
   qtyInput: $("qty-input"),
   micBtn: $("mic-btn"),
+  detailsToggle: $("details-toggle"),
+  addDetails: $("add-details"),
   toast: $("toast"),
   suggestions: $("suggestions"),
   storePicker: $("store-picker"),
+  inputSheet: $("input-sheet"),
+  sheetTitle: $("sheet-title"),
+  sheetInput: $("sheet-input"),
+  sheetOk: $("sheet-ok"),
+  sheetCancel: $("sheet-cancel"),
   storeFilter: $("store-filter"),
   groupToggle: $("group-toggle"),
   quickAddSection: $("quick-add-section"),
@@ -201,6 +208,26 @@ function toast(msg, actionLabel, actionFn) {
   toastTimer = setTimeout(() => els.toast.classList.remove("show"), actionLabel ? 5000 : 2600);
 }
 
+// ── Bottom-sheet za unos vrijednosti (zamjena za prompt) ───────
+let sheetResolve = null;
+function askSheet(title, value = "", placeholder = "", inputmode = "text") {
+  return new Promise((resolve) => {
+    sheetResolve = resolve;
+    els.sheetTitle.textContent = title;
+    els.sheetInput.value = value;
+    els.sheetInput.placeholder = placeholder;
+    els.sheetInput.setAttribute("inputmode", inputmode);
+    els.inputSheet.classList.remove("hidden");
+    setTimeout(() => { els.sheetInput.focus(); els.sheetInput.select(); }, 60);
+  });
+}
+function closeSheet(val) {
+  els.inputSheet.classList.add("hidden");
+  const r = sheetResolve;
+  sheetResolve = null;
+  if (r) r(val);
+}
+
 // ── Glavni render ──────────────────────────────────────────────
 function render() {
   els.viewList.classList.toggle("hidden", view !== "list" || !configured);
@@ -217,6 +244,8 @@ function renderStorePicker() {
       `<button type="button" class="store-chip ${newStores.has(s) ? "selected" : ""}"
          data-act="toggle-new-store" data-store="${esc(s)}">${esc(s)}</button>`
   ).join("");
+  const sel = sortStores([...newStores]);
+  els.detailsToggle.textContent = sel.length ? `🏪 ${sel.join(", ")} ✓` : "🏪 Dućan i količina";
 }
 
 function renderList() {
@@ -302,7 +331,7 @@ function renderItem(item) {
   const who = item.added_by ? `<span class="who">👤 ${esc(item.added_by)}</span>` : "";
 
   return `
-    <li class="item ${item.bought ? "done" : ""}" data-id="${item.id}">
+    <li class="item ${item.bought ? "done" : ""}" data-act="toggle" data-id="${item.id}">
       <button class="check" data-act="toggle" data-id="${item.id}" aria-label="Označi kupljeno">
         ${item.bought ? "✓" : ""}
       </button>
@@ -455,7 +484,7 @@ async function toggleItemStore(id, store) {
 async function editQty(id) {
   const item = items.find((i) => i.id === id);
   if (!item) return;
-  const value = prompt("Količina (npr. 2 ili 1 kg):", item.qty || "");
+  const value = await askSheet(`Količina — ${item.name}`, item.qty || "", "npr. 2 ili 1 kg");
   if (value === null) return;
   try {
     await updateDoc(doc(db, "items", id), { qty: value.trim() || null });
@@ -465,7 +494,7 @@ async function editQty(id) {
 async function editPrice(id) {
   const item = items.find((i) => i.id === id);
   if (!item) return;
-  const value = prompt("Cijena (npr. 1,99):", item.price != null ? String(item.price) : "");
+  const value = await askSheet(`Cijena — ${item.name}`, item.price != null ? String(item.price) : "", "npr. 1,99", "decimal");
   if (value === null) return;
   try {
     await updateDoc(doc(db, "items", id), { price: parsePrice(value) });
@@ -622,6 +651,7 @@ function processVoice(text) {
 
 // ── Swipe za brisanje (lijevo) ─────────────────────────────────
 let swipe = null;
+let suppressClickUntil = 0; // spriječi "tap = kupljeno" odmah nakon swipea
 function initSwipe() {
   document.addEventListener("touchstart", (e) => {
     const li = e.target.closest(".item[data-id]");
@@ -644,6 +674,7 @@ function initSwipe() {
   document.addEventListener("touchend", () => {
     if (!swipe) return;
     const li = swipe.li;
+    if (swipe.moved) suppressClickUntil = Date.now() + 450;
     const dx = parseFloat((li.style.transform.match(/-?\d+/) || [0])[0]);
     if (dx <= -80) {
       li.style.transform = "translateX(-100%)";
@@ -682,10 +713,14 @@ if (configured) {
   });
 
   document.addEventListener("click", (e) => {
+    if (Date.now() < suppressClickUntil) { suppressClickUntil = 0; return; }
     const btn = e.target.closest("[data-act]");
     if (!btn) return;
     const { act, id, store } = btn.dataset;
-    if (act === "toggle") toggleBought(id);
+    if (act === "toggle") {
+      if (e.target.closest(".store-editor")) return; // ne prebacuj dok uređuješ dućane
+      toggleBought(id);
+    }
     else if (act === "edit-stores") { editingStoresFor = editingStoresFor === id ? null : id; render(); }
     else if (act === "toggle-item-store") toggleItemStore(id, store);
     else if (act === "close-store-edit") { editingStoresFor = null; render(); }
@@ -727,12 +762,25 @@ if (configured) {
     view = view === "list" ? "history" : "list";
     render();
   });
-  els.nameBtn.addEventListener("click", () => {
-    const v = prompt("Tvoje ime (za oznaku tko je dodao/kupio):", userName);
+  els.nameBtn.addEventListener("click", async () => {
+    const v = await askSheet("Tvoje ime", userName, "npr. Vedran");
     if (v === null) return;
     userName = v.trim();
     localStorage.setItem("userName", userName);
     toast(userName ? `Bok, ${userName}! 👋` : "Ime uklonjeno");
+  });
+
+  // Otkrivanje detalja (dućan/količina)
+  els.detailsToggle.addEventListener("click", () => els.addDetails.classList.toggle("hidden"));
+
+  // Bottom-sheet za unos vrijednosti
+  els.sheetOk.addEventListener("click", () => closeSheet(els.sheetInput.value));
+  els.sheetCancel.addEventListener("click", () => closeSheet(null));
+  els.sheetInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); closeSheet(els.sheetInput.value); }
+  });
+  els.inputSheet.addEventListener("click", (e) => {
+    if (e.target === els.inputSheet) closeSheet(null);
   });
 
   els.micBtn.addEventListener("click", toggleVoice);
