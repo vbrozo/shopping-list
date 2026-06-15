@@ -15,6 +15,9 @@ import {
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+// ── Fiksna lista dućana ────────────────────────────────────────
+const STORES = ["Konzum", "DM", "Lidl", "Tvornica Zdrave Hrane"];
+
 // ── Konfiguracija / inicijalizacija ────────────────────────────
 const cfg = (window.APP_CONFIG && window.APP_CONFIG.firebaseConfig) || {};
 const configured = cfg.apiKey && cfg.projectId;
@@ -29,9 +32,8 @@ const els = {
   viewHistory: $("view-history"),
   form: $("add-form"),
   itemInput: $("item-input"),
-  storeInput: $("store-input"),
   suggestions: $("suggestions"),
-  storeSuggestions: $("store-suggestions"),
+  storePicker: $("store-picker"),
   storeFilter: $("store-filter"),
   quickAddSection: $("quick-add-section"),
   quickAdd: $("quick-add"),
@@ -66,6 +68,8 @@ let purchases = [];
 let filterStore = "";
 let view = "list"; // "list" | "history"
 let historyQuery = "";
+let editingStoresFor = null; // id stavke čiji se dućani trenutno uređuju
+const newStores = new Set(); // odabrani dućani u formi za dodavanje
 
 // ── Pomoćne ────────────────────────────────────────────────────
 function esc(s) {
@@ -88,6 +92,19 @@ function parsePrice(str) {
   const n = parseFloat(String(str).replace(",", ".").replace(/[^\d.]/g, ""));
   return isNaN(n) ? null : n;
 }
+// Dohvat dućana stavke kao polje (podržava i stari format `store`)
+function getStores(item) {
+  if (Array.isArray(item.stores)) return item.stores;
+  if (item.store) return [item.store];
+  return [];
+}
+// Poredaj dućane redoslijedom iz STORES, ostale na kraj
+function sortStores(arr) {
+  return [...arr].sort((a, b) => {
+    const ia = STORES.indexOf(a), ib = STORES.indexOf(b);
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b, "hr");
+  });
+}
 
 // ── Glavni render ──────────────────────────────────────────────
 function render() {
@@ -101,26 +118,33 @@ function render() {
   else renderHistory();
 }
 
+function renderStorePicker() {
+  els.storePicker.innerHTML = STORES.map(
+    (s) =>
+      `<button type="button" class="store-chip ${newStores.has(s) ? "selected" : ""}"
+         data-act="toggle-new-store" data-store="${esc(s)}">${esc(s)}</button>`
+  ).join("");
+}
+
 function renderList() {
-  // Filter dućana
-  const stores = [...new Set(items.map((i) => i.store).filter(Boolean))].sort();
+  renderStorePicker();
+
+  // Filter dućana — samo oni koji su u upotrebi
+  const used = sortStores([...new Set(items.flatMap(getStores).filter(Boolean))]);
   const prevFilter = els.storeFilter.value;
   els.storeFilter.innerHTML =
     '<option value="">Svi</option>' +
-    stores.map((s) => `<option value="${esc(s)}">${esc(s)}</option>`).join("");
-  els.storeFilter.value = stores.includes(prevFilter) ? prevFilter : "";
+    used.map((s) => `<option value="${esc(s)}">${esc(s)}</option>`).join("");
+  els.storeFilter.value = used.includes(prevFilter) ? prevFilter : "";
   filterStore = els.storeFilter.value;
 
-  // Autocomplete prijedlozi (iz liste + povijesti)
+  // Autocomplete imena (iz liste + povijesti)
   const allNames = [...new Set([...items.map((i) => i.name), ...purchases.map((p) => p.name)])].sort();
-  const allStores = [...new Set([...stores, ...purchases.map((p) => p.store).filter(Boolean)])].sort();
   els.suggestions.innerHTML = allNames.map((n) => `<option value="${esc(n)}">`).join("");
-  els.storeSuggestions.innerHTML = allStores.map((s) => `<option value="${esc(s)}">`).join("");
 
-  // Brzi unos iz povijesti (najčešći artikli koji još nisu na listi)
   renderQuickAdd();
 
-  const visible = items.filter((i) => !filterStore || i.store === filterStore);
+  const visible = items.filter((i) => !filterStore || getStores(i).includes(filterStore));
   const active = visible.filter((i) => !i.bought);
   const bought = visible.filter((i) => i.bought);
 
@@ -134,11 +158,27 @@ function renderList() {
 }
 
 function renderItem(item) {
-  const store = item.store
-    ? `<button class="store-badge" data-act="store" data-id="${item.id}">📍 ${esc(item.store)}</button>`
-    : `<button class="store-badge empty" data-act="store" data-id="${item.id}">+ dućan</button>`;
+  const stores = sortStores(getStores(item));
+  const storeBadges = stores
+    .map((s) => `<span class="store-badge">📍 ${esc(s)}</span>`)
+    .join("");
+  const editBtn = `<button class="store-badge edit ${stores.length ? "" : "empty"}"
+      data-act="edit-stores" data-id="${item.id}">${stores.length ? "✏️" : "+ dućan"}</button>`;
 
-  // Polje za cijenu prikazuje se samo za kupljene stavke
+  // Inline uređivanje dućana
+  const editor =
+    editingStoresFor === item.id
+      ? `<div class="store-editor">
+           ${STORES.map(
+             (s) =>
+               `<button class="store-chip ${stores.includes(s) ? "selected" : ""}"
+                  data-act="toggle-item-store" data-id="${item.id}" data-store="${esc(s)}">${esc(s)}</button>`
+           ).join("")}
+           <button class="btn-text done" data-act="close-store-edit">✓ gotovo</button>
+         </div>`
+      : "";
+
+  // Cijena (samo za kupljene)
   const priceTxt = fmtPrice(item.price);
   const price = item.bought
     ? (priceTxt
@@ -153,14 +193,14 @@ function renderItem(item) {
       </button>
       <div class="item-body">
         <div class="item-name">${esc(item.name)}</div>
-        <div class="badges">${store}${price}</div>
+        <div class="badges">${storeBadges}${editBtn}${price}</div>
+        ${editor}
       </div>
       <button class="btn-del" data-act="del" data-id="${item.id}" aria-label="Obriši">×</button>
     </li>`;
 }
 
 function renderQuickAdd() {
-  // Statistika iz povijesti: učestalost + zadnji dućan po imenu
   const stats = aggregateByName();
   const onList = new Set(items.map((i) => i.name.toLowerCase()));
 
@@ -180,7 +220,6 @@ function renderQuickAdd() {
     .join("");
 }
 
-// Grupiraj povijest po imenu artikla
 function aggregateByName() {
   const map = {};
   for (const p of purchases) {
@@ -204,10 +243,8 @@ function aggregateByName() {
 // ── Render: POVIJEST ───────────────────────────────────────────
 function renderHistory() {
   const q = historyQuery.trim().toLowerCase();
-  const has = purchases.length > 0;
-  els.emptyHistory.classList.toggle("hidden", has);
+  els.emptyHistory.classList.toggle("hidden", purchases.length > 0);
 
-  // Pregled cijena po artiklu (najjeftiniji dućan istaknut)
   const stats = Object.values(aggregateByName())
     .filter((s) => !q || s.name.toLowerCase().includes(q))
     .sort((a, b) => a.name.localeCompare(b.name, "hr"));
@@ -218,8 +255,7 @@ function renderHistory() {
         return `<li class="item"><div class="item-body"><div class="item-name">${esc(s.name)}</div>
                 <div class="muted-line">još bez cijene · ${s.count}× kupljeno</div></div></li>`;
       }
-      const sorted = [...s.prices].sort((a, b) => a.price - b.price);
-      const min = sorted[0];
+      const min = [...s.prices].sort((a, b) => a.price - b.price)[0];
       const last = [...s.prices].sort((a, b) => b.at - a.at)[0];
       const cheapest = `Najjeftinije: <strong>${min.price.toFixed(2)} €</strong> (${esc(min.store)})`;
       const recent = `Zadnje: ${last.price.toFixed(2)} € (${esc(last.store)})`;
@@ -230,7 +266,6 @@ function renderHistory() {
     })
     .join("");
 
-  // Kronološka povijest
   const timeline = purchases
     .filter((p) => !q || p.name.toLowerCase().includes(q))
     .sort((a, b) => (b.purchased_at || 0) - (a.purchased_at || 0));
@@ -254,11 +289,12 @@ function renderHistory() {
 }
 
 // ── Akcije: lista ──────────────────────────────────────────────
-async function addItem(name, store) {
+async function addItem(name, stores) {
   try {
     await addDoc(itemsCol, {
       name,
-      store: store || null,
+      stores: stores || [],
+      store: null,
       bought: false,
       bought_at: null,
       price: null,
@@ -272,20 +308,18 @@ async function toggleBought(id) {
   if (!item) return;
   const next = !item.bought;
   try {
-    await updateDoc(doc(db, "items", id), {
-      bought: next,
-      bought_at: next ? Date.now() : null,
-    });
+    await updateDoc(doc(db, "items", id), { bought: next, bought_at: next ? Date.now() : null });
   } catch (e) { console.error(e); setSync(false); }
 }
 
-async function editStore(id) {
+// Uključi/isključi dućan na postojećoj stavci
+async function toggleItemStore(id, store) {
   const item = items.find((i) => i.id === id);
   if (!item) return;
-  const value = prompt("U kojem dućanu se kupuje?", item.store || "");
-  if (value === null) return;
+  const cur = new Set(getStores(item));
+  cur.has(store) ? cur.delete(store) : cur.add(store);
   try {
-    await updateDoc(doc(db, "items", id), { store: value.trim() || null });
+    await updateDoc(doc(db, "items", id), { stores: [...cur], store: null });
   } catch (e) { console.error(e); setSync(false); }
 }
 
@@ -300,16 +334,15 @@ async function editPrice(id) {
 }
 
 async function deleteItem(id) {
-  try {
-    await deleteDoc(doc(db, "items", id));
-  } catch (e) { console.error(e); setSync(false); }
+  try { await deleteDoc(doc(db, "items", id)); }
+  catch (e) { console.error(e); setSync(false); }
 }
 
 function quickAdd(name, store) {
-  addItem(name, store || "");
+  addItem(name, store ? [store] : []);
 }
 
-// Arhiviraj kupljene stavke u povijest, pa ih makni s liste
+// Arhiviraj kupljene stavke u povijest (jedan zapis po dućanu stavke)
 async function archiveBought() {
   const bought = items.filter((i) => i.bought);
   if (bought.length === 0) return;
@@ -317,9 +350,12 @@ async function archiveBought() {
   try {
     const batch = writeBatch(db);
     for (const it of bought) {
+      const sts = getStores(it);
+      // Ako stavka ima više dućana, koristi prvi (po redu STORES) kao dućan kupnje
+      const store = sts.length ? sortStores(sts)[0] : null;
       batch.set(doc(purchasesCol), {
         name: it.name,
-        store: it.store || null,
+        store,
         price: typeof it.price === "number" ? it.price : null,
         purchased_at: it.bought_at || Date.now(),
       });
@@ -331,9 +367,8 @@ async function archiveBought() {
 
 async function deleteHistory(id) {
   if (!confirm("Obrisati ovaj zapis iz povijesti?")) return;
-  try {
-    await deleteDoc(doc(db, "purchases", id));
-  } catch (e) { console.error(e); setSync(false); }
+  try { await deleteDoc(doc(db, "purchases", id)); }
+  catch (e) { console.error(e); setSync(false); }
 }
 
 // ── Event listeneri ────────────────────────────────────────────
@@ -342,22 +377,29 @@ if (configured) {
     e.preventDefault();
     const name = els.itemInput.value.trim();
     if (!name) return;
-    addItem(name, els.storeInput.value.trim());
+    addItem(name, sortStores([...newStores]));
     els.itemInput.value = "";
-    els.storeInput.value = "";
+    newStores.clear();
+    renderStorePicker();
     els.itemInput.focus();
   });
 
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-act]");
     if (!btn) return;
-    const { act, id } = btn.dataset;
+    const { act, id, store } = btn.dataset;
     if (act === "toggle") toggleBought(id);
-    else if (act === "store") editStore(id);
+    else if (act === "edit-stores") { editingStoresFor = editingStoresFor === id ? null : id; render(); }
+    else if (act === "toggle-item-store") toggleItemStore(id, store);
+    else if (act === "close-store-edit") { editingStoresFor = null; render(); }
+    else if (act === "toggle-new-store") {
+      newStores.has(store) ? newStores.delete(store) : newStores.add(store);
+      renderStorePicker();
+    }
     else if (act === "price") editPrice(id);
     else if (act === "del") deleteItem(id);
     else if (act === "del-hist") deleteHistory(id);
-    else if (act === "quick") quickAdd(btn.dataset.name, btn.dataset.store);
+    else if (act === "quick") quickAdd(btn.dataset.name, store);
   });
 
   els.storeFilter.addEventListener("change", render);
@@ -366,7 +408,6 @@ if (configured) {
     historyQuery = e.target.value;
     renderHistory();
   });
-
   els.viewToggle.addEventListener("click", () => {
     view = view === "list" ? "history" : "list";
     render();

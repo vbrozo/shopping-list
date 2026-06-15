@@ -9,7 +9,7 @@ a hosta se besplatno na GitHub Pages.
 **Lista (faza 1)**
 - ➕ Dodavanje stavki
 - ✅ Označavanje kao kupljeno
-- 🏪 Dodavanje dućana na svaku stavku + filtriranje po dućanu
+- 🏪 Odabir dućana iz fiksne liste (Konzum, DM, Lidl, Tvornica Zdrave Hrane), može više po stavci + filtriranje po dućanu
 - 💡 Prijedlozi (autocomplete) na temelju prijašnjih unosa
 - 🔄 Sinkronizacija uživo između telefona
 - 📱 Može se "instalirati" na početni ekran (PWA)

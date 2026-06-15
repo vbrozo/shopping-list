@@ -37,13 +37,10 @@
           list="suggestions"
           required />
         <datalist id="suggestions"></datalist>
-        <input
-          id="store-input"
-          type="text"
-          placeholder="Dućan (nije obavezno)"
-          autocomplete="off"
-          list="store-suggestions" />
-        <datalist id="store-suggestions"></datalist>
+        <div class="store-picker-wrap">
+          <span class="picker-label">Dućan (može više):</span>
+          <div id="store-picker" class="store-picker"></div>
+        </div>
         <button type="submit" class="btn-add" aria-label="Dodaj">➕ Dodaj</button>
       </form>
 
@@ -101,7 +98,7 @@
     </div>
   </main>
 
-  <script src="config.js?v=2"></script>
-  <script type="module" src="app.js?v=2"></script>
+  <script src="config.js?v=3"></script>
+  <script type="module" src="app.js?v=3"></script>
 </body>
 </html>
