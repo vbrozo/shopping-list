@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "23";
+const APP_VERSION = "24";
 
 // ── Monokromatske ikone (currentColor — prate temu) ────────────
 const ICONS = {
@@ -102,6 +102,7 @@ const els = {
   storePicker: $("store-picker"),
   storeFilter: $("store-filter"),
   groupToggle: $("group-toggle"),
+  listSummary: $("list-summary"),
   quickAddSection: $("quick-add-section"),
   quickAdd: $("quick-add"),
   activeList: $("active-list"),
@@ -213,6 +214,10 @@ function esc(s) {
 }
 function setSync(ok) {
   els.syncDot.className = "sync-dot " + (ok ? "online" : "offline");
+}
+// Vibracija (radi na Androidu; iOS Safari ne podržava — tiho ne radi ništa)
+function haptic(ms = 12) {
+  try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {}
 }
 function fmtPrice(p) {
   return (typeof p === "number" && !isNaN(p)) ? p.toFixed(2) + " €" : null;
@@ -514,6 +519,11 @@ function renderList() {
   const active = visible.filter((i) => !i.bought);
   const bought = visible.filter((i) => i.bought);
 
+  // Hitno (zvjezdica) na vrh
+  active.sort((a, b) => (b.urgent ? 1 : 0) - (a.urgent ? 1 : 0) || (a.created_at || 0) - (b.created_at || 0));
+
+  renderSummary(active);
+
   els.activeList.innerHTML = renderActiveItems(active);
   els.boughtList.innerHTML = bought.map(renderItem).join("");
 
@@ -563,7 +573,7 @@ function renderItem(item) {
   const qtyTag = item.qty ? `<span class="qty-tag">×${esc(item.qty)}</span>` : "";
 
   return `
-    <li class="item swipeable ${item.bought ? "done" : ""}" data-id="${item.id}">
+    <li class="item swipeable ${item.bought ? "done" : ""} ${item.urgent ? "urgent" : ""}" data-id="${item.id}">
       <div class="item-bg"><span class="item-bg-icon">${icon("trash")} Obriši</span></div>
       <div class="item-inner">
         <button class="check" data-act="toggle" data-id="${item.id}" aria-label="Označi kupljeno">
@@ -571,6 +581,7 @@ function renderItem(item) {
         </button>
         <div class="item-main" data-act="edit-item" data-id="${item.id}">
           <div class="item-row1">
+            <button class="star-btn ${item.urgent ? "on" : ""}" data-act="star" data-id="${item.id}" aria-label="Hitno">${icon("star")}</button>
             <span class="item-name">${esc(item.name)}</span>
             ${qtyTag}
           </div>
@@ -631,6 +642,46 @@ function aggregateByName() {
     e.name = Object.entries(e.nameCounts).sort((a, b) => b[1] - a[1])[0][0];
   }
   return map;
+}
+
+// Procjena cijene košarice + pametni dućan (na temelju povijesti cijena)
+function renderSummary(active) {
+  const stats = aggregateByName();
+  const statFor = (n) => stats[normKey(n)];
+  let estTotal = 0, estKnown = 0;
+  const perStore = {};
+  for (const s of STORES) perStore[s] = { total: 0, covered: 0 };
+
+  for (const it of active) {
+    const s = statFor(it.name);
+    if (!s || !s.prices.length) continue;
+    const last = [...s.prices].sort((a, b) => b.at - a.at)[0];
+    estTotal += last.price;
+    estKnown++;
+    for (const store of STORES) {
+      const ps = s.perStore[store];
+      if (ps && ps.last != null) { perStore[store].total += ps.last; perStore[store].covered++; }
+    }
+  }
+
+  if (estKnown === 0) { els.listSummary.classList.add("hidden"); els.listSummary.innerHTML = ""; return; }
+
+  let best = null;
+  for (const store of STORES) {
+    const d = perStore[store];
+    if (d.covered === 0) continue;
+    if (!best || d.covered > best.covered || (d.covered === best.covered && d.total < best.total)) {
+      best = { store, total: d.total, covered: d.covered };
+    }
+  }
+
+  const M = active.length;
+  let html = `<div class="summary-row">${icon("tag")} Procjena košarice: <strong>~${estTotal.toFixed(2)} €</strong> <span class="muted">(${estKnown}/${M} s cijenom)</span></div>`;
+  if (best) {
+    html += `<div class="summary-row">${icon("bag")} Najpovoljnije na jednom mjestu: <strong>${esc(best.store)}</strong> ~${best.total.toFixed(2)} € <span class="muted">(${best.covered}/${M})</span></div>`;
+  }
+  els.listSummary.innerHTML = html;
+  els.listSummary.classList.remove("hidden");
 }
 
 // ── Render: POVIJEST ───────────────────────────────────────────
@@ -746,9 +797,19 @@ async function addItem(name, stores, qty) {
 async function toggleBought(id) {
   const item = items.find((i) => i.id === id);
   if (!item) return;
+  haptic();
   const next = !item.bought;
   try {
     await updateDoc(doc(db, "items", id), { bought: next, bought_at: next ? Date.now() : null });
+  } catch (e) { console.error(e); setSync(false); }
+}
+
+async function toggleStar(id) {
+  const item = items.find((i) => i.id === id);
+  if (!item) return;
+  haptic();
+  try {
+    await updateDoc(doc(db, "items", id), { urgent: !item.urgent });
   } catch (e) { console.error(e); setSync(false); }
 }
 
@@ -931,6 +992,7 @@ function initSwipe() {
     if (swipe.moved) suppressClickUntil = Date.now() + 450;
     inner.style.transition = "";
     if (swipe.dx <= -80) {
+      haptic(20);
       inner.style.transform = "translateX(-100%)";
       inner.style.opacity = "0";
       deleteItem(swipe.id);
@@ -975,6 +1037,7 @@ if (configured) {
     if (!btn) return;
     const { act, id, store } = btn.dataset;
     if (act === "toggle") toggleBought(id);
+    else if (act === "star") toggleStar(id);
     else if (act === "edit-item") openEditSheet(id);
     else if (act === "edit-store") {
       editStores.has(store) ? editStores.delete(store) : editStores.add(store);

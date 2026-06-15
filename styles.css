@@ -896,6 +896,43 @@ code {
 .btn-mic .icn,
 .input-row .btn-add .icn { width: 1.3em; height: 1.3em; vertical-align: 0; }
 
+/* Sažetak: procjena košarice + pametni dućan */
+.summary {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  box-shadow: var(--shadow);
+}
+.summary-row {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.summary .muted { color: var(--muted); font-size: 0.82rem; }
+
+/* Hitno / zvjezdica */
+.star-btn {
+  background: none;
+  border: none;
+  padding: 0 2px 0 0;
+  margin: 0;
+  cursor: pointer;
+  color: var(--muted);
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.star-btn .icn { width: 1.05em; height: 1.05em; }
+.star-btn.on { color: #f0a000; }
+.star-btn.on .icn { fill: currentColor; }
+.item.urgent .item-inner { box-shadow: inset 4px 0 0 #f0a000; }
+
 .hidden { display: none !important; }
 
 /* ── Tamni način ──────────────────────────────────────────────
