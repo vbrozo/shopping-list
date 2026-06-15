@@ -409,6 +409,48 @@ code {
 }
 .item.will-delete .item-bg { background: #b71c1c; }
 
+/* Jedinstvena kartica */
+.item-main {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+.item-row1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.item-row1 .item-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.qty-tag {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  color: #4527a0;
+  background: #ede7f6;
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.item-meta {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.meta-empty { font-style: italic; opacity: 0.8; }
+.sheet-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 12px 0 5px;
+}
+
 .check {
   width: 26px;
   height: 26px;
@@ -828,7 +870,8 @@ html.dark {
 }
 html.dark .store-badge { background: #1b3a24; color: #a5d6a7; }
 html.dark .price-badge { background: #3a2a12; color: #ffcc80; }
-html.dark .qty-badge   { background: #2a2440; color: #b39ddb; }
+html.dark .qty-badge,
+html.dark .qty-tag     { background: #2a2440; color: #b39ddb; }
 html.dark .btn-save    { background: #1b3a24; }
 html.dark .store-chip  { background: var(--card); color: var(--text); }
 html.dark .notice      { background: #2b2410; border-color: #5a4a1a; }

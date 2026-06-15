@@ -16,7 +16,7 @@
     })();
   </script>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="styles.css?v=17" />
+  <link rel="stylesheet" href="styles.css?v=18" />
 </head>
 <body>
   <header class="app-header">
@@ -175,35 +175,33 @@
     </div>
   </div>
 
-  <!-- ══════════ BOTTOM-SHEET: količina ══════════ -->
-  <div id="qty-sheet" class="modal hidden">
+  <!-- ══════════ BOTTOM-SHEET: uređivanje stavke ══════════ -->
+  <div id="edit-sheet" class="modal hidden">
     <div class="modal-card">
-      <h2 id="qty-sheet-title">Količina</h2>
+      <h2>Uredi stavku</h2>
+      <label class="sheet-label">Naziv</label>
+      <input id="edit-name" class="sheet-input" type="text" autocomplete="off" />
+
+      <label class="sheet-label">Količina</label>
       <div class="qty-row">
-        <select id="qty-sheet-value" class="qty-select"></select>
-        <div id="qty-sheet-units" class="qty-units"></div>
+        <select id="edit-qty-value" class="qty-select"></select>
+        <div id="edit-qty-units" class="qty-units"></div>
       </div>
+
+      <label class="sheet-label">Dućani</label>
+      <div id="edit-stores" class="store-picker"></div>
+
+      <label class="sheet-label">Cijena (kad je kupljeno)</label>
+      <input id="edit-price" class="sheet-input" type="text" inputmode="decimal" placeholder="npr. 1,99" />
+
       <div class="modal-actions">
-        <button id="qty-sheet-clear" class="btn-text">Obriši</button>
-        <button id="qty-sheet-cancel" class="btn-text">Odustani</button>
-        <button id="qty-sheet-ok" class="btn-add">Spremi ✓</button>
+        <button id="edit-cancel" class="btn-text">Odustani</button>
+        <button id="edit-save" class="btn-add">Spremi ✓</button>
       </div>
     </div>
   </div>
 
-  <!-- ══════════ BOTTOM-SHEET: brzi unos vrijednosti ══════════ -->
-  <div id="input-sheet" class="modal hidden">
-    <div class="modal-card">
-      <h2 id="sheet-title"></h2>
-      <input id="sheet-input" class="sheet-input" type="text" autocomplete="off" />
-      <div class="modal-actions">
-        <button id="sheet-cancel" class="btn-text">Odustani</button>
-        <button id="sheet-ok" class="btn-add">Spremi ✓</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="config.js?v=17"></script>
-  <script type="module" src="app.js?v=17"></script>
+  <script src="config.js?v=18"></script>
+  <script type="module" src="app.js?v=18"></script>
 </body>
 </html>

@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "17";
+const APP_VERSION = "18";
 
 // ── Dućani (uredivi u Postavkama; spremaju se u Firestore) ─────
 const DEFAULT_STORES = ["Konzum", "DM", "Lidl", "Tvornica Zdrave Hrane"];
@@ -55,24 +55,20 @@ const els = {
   itemInput: $("item-input"),
   qtyValue: $("qty-value"),
   qtyUnits: $("qty-units"),
-  qtySheet: $("qty-sheet"),
-  qtySheetTitle: $("qty-sheet-title"),
-  qtySheetValue: $("qty-sheet-value"),
-  qtySheetUnits: $("qty-sheet-units"),
-  qtySheetOk: $("qty-sheet-ok"),
-  qtySheetCancel: $("qty-sheet-cancel"),
-  qtySheetClear: $("qty-sheet-clear"),
+  editSheet: $("edit-sheet"),
+  editName: $("edit-name"),
+  editQtyValue: $("edit-qty-value"),
+  editQtyUnits: $("edit-qty-units"),
+  editStores: $("edit-stores"),
+  editPrice: $("edit-price"),
+  editSave: $("edit-save"),
+  editCancel: $("edit-cancel"),
   micBtn: $("mic-btn"),
   detailsToggle: $("details-toggle"),
   addDetails: $("add-details"),
   toast: $("toast"),
   suggestList: $("suggest-list"),
   storePicker: $("store-picker"),
-  inputSheet: $("input-sheet"),
-  sheetTitle: $("sheet-title"),
-  sheetInput: $("sheet-input"),
-  sheetOk: $("sheet-ok"),
-  sheetCancel: $("sheet-cancel"),
   storeFilter: $("store-filter"),
   groupToggle: $("group-toggle"),
   quickAddSection: $("quick-add-section"),
@@ -165,7 +161,9 @@ let purchases = [];
 let filterStore = "";
 let view = "list";
 let historyQuery = "";
-let editingStoresFor = null;
+let editId = null; // stavka koja se trenutno uređuje u editoru
+let editUnit = "kom"; // odabrana jedinica u editoru
+const editStores = new Set(); // odabrani dućani u editoru
 let groupByStore = localStorage.getItem("groupByStore") === "1";
 let userName = localStorage.getItem("userName") || "";
 let storesTouched = false; // je li korisnik ručno mijenjao dućane u formi
@@ -278,26 +276,6 @@ function toast(msg, actionLabel, actionFn) {
   toastTimer = setTimeout(() => els.toast.classList.remove("show"), actionLabel ? 5000 : 2600);
 }
 
-// ── Bottom-sheet za unos vrijednosti (zamjena za prompt) ───────
-let sheetResolve = null;
-function askSheet(title, value = "", placeholder = "", inputmode = "text") {
-  return new Promise((resolve) => {
-    sheetResolve = resolve;
-    els.sheetTitle.textContent = title;
-    els.sheetInput.value = value;
-    els.sheetInput.placeholder = placeholder;
-    els.sheetInput.setAttribute("inputmode", inputmode);
-    els.inputSheet.classList.remove("hidden");
-    setTimeout(() => { els.sheetInput.focus(); els.sheetInput.select(); }, 60);
-  });
-}
-function closeSheet(val) {
-  els.inputSheet.classList.add("hidden");
-  const r = sheetResolve;
-  sheetResolve = null;
-  if (r) r(val);
-}
-
 // ── Kontrola količine (dropdown vrijednosti + jedinice kom/kg/l) ─
 function qtyOptionsHTML(sel) {
   const vals = (!sel || QTY_VALUES.includes(sel)) ? QTY_VALUES : [...QTY_VALUES, sel];
@@ -332,25 +310,45 @@ function renderAddUnits() {
   els.qtyUnits.innerHTML = unitChipsHTML(addUnit, "qty-unit");
 }
 
-// Bottom-sheet za uređivanje količine
-let qtySheetResolve = null;
-let qtySheetUnit = "kom";
-function askQty(title, current) {
-  return new Promise((resolve) => {
-    qtySheetResolve = resolve;
-    const { value, unit } = parseQty(current);
-    qtySheetUnit = unit;
-    els.qtySheetTitle.textContent = title;
-    els.qtySheetValue.innerHTML = qtyOptionsHTML(value);
-    els.qtySheetUnits.innerHTML = unitChipsHTML(qtySheetUnit, "qty-sheet-unit");
-    els.qtySheet.classList.remove("hidden");
-  });
+// ── Editor stavke (jedan bottom-sheet za sve) ──────────────────
+function openEditSheet(id) {
+  const item = items.find((i) => i.id === id);
+  if (!item) return;
+  editId = id;
+  els.editName.value = item.name;
+  const { value, unit } = parseQty(item.qty || "");
+  editUnit = unit;
+  els.editQtyValue.innerHTML = qtyOptionsHTML(value);
+  els.editQtyUnits.innerHTML = unitChipsHTML(editUnit, "edit-qty-unit");
+  editStores.clear();
+  getStores(item).forEach((s) => editStores.add(s));
+  renderEditStores();
+  els.editPrice.value = item.price != null ? String(item.price) : "";
+  els.editSheet.classList.remove("hidden");
 }
-function closeQtySheet(val) {
-  els.qtySheet.classList.add("hidden");
-  const r = qtySheetResolve;
-  qtySheetResolve = null;
-  if (r) r(val);
+function renderEditStores() {
+  els.editStores.innerHTML = STORES
+    .map((s) => `<button type="button" class="store-chip ${editStores.has(s) ? "selected" : ""}" data-act="edit-store" data-store="${esc(s)}">${esc(s)}</button>`)
+    .join("");
+}
+function closeEditSheet() {
+  els.editSheet.classList.add("hidden");
+  editId = null;
+}
+async function saveEdit() {
+  if (!editId) return;
+  const name = els.editName.value.trim();
+  if (!name) { toast("Naziv ne može biti prazan"); return; }
+  try {
+    await updateDoc(doc(db, "items", editId), {
+      name,
+      qty: buildQty(els.editQtyValue.value, editUnit) || null,
+      stores: sortStores([...editStores]),
+      store: null,
+      price: parsePrice(els.editPrice.value),
+    });
+    closeEditSheet();
+  } catch (e) { console.error(e); setSync(false); }
 }
 
 // ── Glavni render ──────────────────────────────────────────────
@@ -452,48 +450,37 @@ function renderActiveItems(active) {
     .join("");
 }
 
+// Jedinstvena kartica: red 1 = naziv + količina; red 2 = meta (dućani · cijena · tko)
 function renderItem(item) {
   const stores = sortStores(getStores(item));
-  const storeBadges = stores.map((s) => `<span class="store-badge">📍 ${esc(s)}</span>`).join("");
-  const editBtn = `<button class="store-badge edit ${stores.length ? "" : "empty"}"
-      data-act="edit-stores" data-id="${item.id}">${stores.length ? "✏️" : "+ dućan"}</button>`;
+  let storeText;
+  if (stores.length === 0) {
+    storeText = `<span class="meta-empty">bez dućana</span>`;
+  } else {
+    const shown = stores.slice(0, 2).map(esc).join(", ");
+    const extra = stores.length > 2 ? ` +${stores.length - 2}` : "";
+    storeText = `📍 ${shown}${extra}`;
+  }
+  const meta = [storeText];
+  const priceTxt = item.bought ? fmtPrice(item.price) : null;
+  if (priceTxt) meta.push(`💰 ${priceTxt}`);
+  if (item.added_by) meta.push(`👤 ${esc(item.added_by)}`);
 
-  const qty = item.qty
-    ? `<button class="qty-badge" data-act="qty" data-id="${item.id}">×${esc(item.qty)}</button>`
-    : `<button class="qty-badge empty" data-act="qty" data-id="${item.id}">+ kol.</button>`;
-
-  const editor =
-    editingStoresFor === item.id
-      ? `<div class="store-editor">
-           ${STORES.map(
-             (s) =>
-               `<button class="store-chip ${stores.includes(s) ? "selected" : ""}"
-                  data-act="toggle-item-store" data-id="${item.id}" data-store="${esc(s)}">${esc(s)}</button>`
-           ).join("")}
-           <button class="btn-text done" data-act="close-store-edit">✓ gotovo</button>
-         </div>`
-      : "";
-
-  const priceTxt = fmtPrice(item.price);
-  const price = item.bought
-    ? (priceTxt
-        ? `<button class="price-badge" data-act="price" data-id="${item.id}">💰 ${priceTxt}</button>`
-        : `<button class="price-badge empty" data-act="price" data-id="${item.id}">💰 cijena</button>`)
-    : "";
-
-  const who = item.added_by ? `<span class="who">👤 ${esc(item.added_by)}</span>` : "";
+  const qtyTag = item.qty ? `<span class="qty-tag">×${esc(item.qty)}</span>` : "";
 
   return `
-    <li class="item swipeable ${item.bought ? "done" : ""}" data-act="toggle" data-id="${item.id}">
+    <li class="item swipeable ${item.bought ? "done" : ""}" data-id="${item.id}">
       <div class="item-bg"><span class="item-bg-icon">🗑️ Obriši</span></div>
       <div class="item-inner">
         <button class="check" data-act="toggle" data-id="${item.id}" aria-label="Označi kupljeno">
           ${item.bought ? "✓" : ""}
         </button>
-        <div class="item-body">
-          <div class="item-name">${esc(item.name)} ${who}</div>
-          <div class="badges">${storeBadges}${editBtn}${qty}${price}</div>
-          ${editor}
+        <div class="item-main" data-act="edit-item" data-id="${item.id}">
+          <div class="item-row1">
+            <span class="item-name">${esc(item.name)}</span>
+            ${qtyTag}
+          </div>
+          <div class="item-meta">${meta.join(" · ")}</div>
         </div>
         <button class="btn-del" data-act="del" data-id="${item.id}" aria-label="Obriši">×</button>
       </div>
@@ -660,36 +647,6 @@ async function toggleBought(id) {
   const next = !item.bought;
   try {
     await updateDoc(doc(db, "items", id), { bought: next, bought_at: next ? Date.now() : null });
-  } catch (e) { console.error(e); setSync(false); }
-}
-
-async function toggleItemStore(id, store) {
-  const item = items.find((i) => i.id === id);
-  if (!item) return;
-  const cur = new Set(getStores(item));
-  cur.has(store) ? cur.delete(store) : cur.add(store);
-  try {
-    await updateDoc(doc(db, "items", id), { stores: [...cur], store: null });
-  } catch (e) { console.error(e); setSync(false); }
-}
-
-async function editQty(id) {
-  const item = items.find((i) => i.id === id);
-  if (!item) return;
-  const result = await askQty(`Količina — ${item.name}`, item.qty || "");
-  if (result === null) return; // odustao
-  try {
-    await updateDoc(doc(db, "items", id), { qty: result || null });
-  } catch (e) { console.error(e); setSync(false); }
-}
-
-async function editPrice(id) {
-  const item = items.find((i) => i.id === id);
-  if (!item) return;
-  const value = await askSheet(`Cijena — ${item.name}`, item.price != null ? String(item.price) : "", "npr. 1,99", "decimal");
-  if (value === null) return;
-  try {
-    await updateDoc(doc(db, "items", id), { price: parsePrice(value) });
   } catch (e) { console.error(e); setSync(false); }
 }
 
@@ -915,13 +872,16 @@ if (configured) {
     const btn = e.target.closest("[data-act]");
     if (!btn) return;
     const { act, id, store } = btn.dataset;
-    if (act === "toggle") {
-      if (e.target.closest(".store-editor")) return; // ne prebacuj dok uređuješ dućane
-      toggleBought(id);
+    if (act === "toggle") toggleBought(id);
+    else if (act === "edit-item") openEditSheet(id);
+    else if (act === "edit-store") {
+      editStores.has(store) ? editStores.delete(store) : editStores.add(store);
+      renderEditStores();
     }
-    else if (act === "edit-stores") { editingStoresFor = editingStoresFor === id ? null : id; render(); }
-    else if (act === "toggle-item-store") toggleItemStore(id, store);
-    else if (act === "close-store-edit") { editingStoresFor = null; render(); }
+    else if (act === "edit-qty-unit") {
+      editUnit = editUnit === btn.dataset.unit ? "" : btn.dataset.unit;
+      els.editQtyUnits.innerHTML = unitChipsHTML(editUnit, "edit-qty-unit");
+    }
     else if (act === "toggle-new-store") {
       storesTouched = true;
       newStores.has(store) ? newStores.delete(store) : newStores.add(store);
@@ -937,12 +897,6 @@ if (configured) {
       addUnit = addUnit === btn.dataset.unit ? "" : btn.dataset.unit;
       renderAddUnits();
     }
-    else if (act === "qty-sheet-unit") {
-      qtySheetUnit = qtySheetUnit === btn.dataset.unit ? "" : btn.dataset.unit;
-      els.qtySheetUnits.innerHTML = unitChipsHTML(qtySheetUnit, "qty-sheet-unit");
-    }
-    else if (act === "qty") editQty(id);
-    else if (act === "price") editPrice(id);
     else if (act === "del") deleteItem(id);
     else if (act === "del-hist") deleteHistory(id);
     else if (act === "quick") quickAdd(btn.dataset.name, store);
@@ -1004,25 +958,11 @@ if (configured) {
   // Otkrivanje detalja (dućan/količina)
   els.detailsToggle.addEventListener("click", () => els.addDetails.classList.toggle("hidden"));
 
-  // Bottom-sheet za unos vrijednosti
-  els.sheetOk.addEventListener("click", () => closeSheet(els.sheetInput.value));
-  els.sheetCancel.addEventListener("click", () => closeSheet(null));
-  els.sheetInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { e.preventDefault(); closeSheet(els.sheetInput.value); }
-  });
-  els.inputSheet.addEventListener("click", (e) => {
-    if (e.target === els.inputSheet) closeSheet(null);
-  });
-
-  // Bottom-sheet za količinu
-  els.qtySheetOk.addEventListener("click", () => {
-    const built = buildQty(els.qtySheetValue.value, qtySheetUnit);
-    closeQtySheet(built === null ? "" : built);
-  });
-  els.qtySheetClear.addEventListener("click", () => closeQtySheet(""));
-  els.qtySheetCancel.addEventListener("click", () => closeQtySheet(null));
-  els.qtySheet.addEventListener("click", (e) => {
-    if (e.target === els.qtySheet) closeQtySheet(null);
+  // Editor stavke
+  els.editSave.addEventListener("click", saveEdit);
+  els.editCancel.addEventListener("click", closeEditSheet);
+  els.editSheet.addEventListener("click", (e) => {
+    if (e.target === els.editSheet) closeEditSheet();
   });
 
   els.micBtn.addEventListener("click", toggleVoice);
