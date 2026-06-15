@@ -11,6 +11,7 @@ a hosta se besplatno na GitHub Pages.
 - ✅ Označavanje kao kupljeno
 - 🏪 Odabir dućana iz fiksne liste (Konzum, DM, Lidl, Tvornica Zdrave Hrane), može više po stavci + filtriranje po dućanu
 - 💡 Prijedlozi (autocomplete) na temelju prijašnjih unosa
+- 🎤 Glasovni unos — npr. „Dodaj kruh i mlijeko" (Web Speech API, hr-HR; Chrome/Safari)
 - 🔄 Sinkronizacija uživo između telefona
 - 📱 Može se "instalirati" na početni ekran (PWA)
 

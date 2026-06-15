@@ -29,13 +29,16 @@
     <div id="view-list">
       <!-- Forma za dodavanje -->
       <form id="add-form" class="add-form">
-        <input
-          id="item-input"
-          type="text"
-          placeholder="Dodaj stavku (npr. mlijeko)"
-          autocomplete="off"
-          list="suggestions"
-          required />
+        <div class="input-row">
+          <input
+            id="item-input"
+            type="text"
+            placeholder="Dodaj stavku (npr. mlijeko)"
+            autocomplete="off"
+            list="suggestions"
+            required />
+          <button type="button" id="mic-btn" class="btn-mic" aria-label="Glasovni unos">🎤</button>
+        </div>
         <datalist id="suggestions"></datalist>
         <div class="store-picker-wrap">
           <span class="picker-label">Dućan (može više):</span>
@@ -98,6 +101,9 @@
     </div>
   </main>
 
+  <!-- Kratka obavijest (toast) -->
+  <div id="toast" class="toast"></div>
+
   <!-- ══════════ DIJALOG: spremanje u povijest ══════════ -->
   <div id="archive-modal" class="modal hidden">
     <div class="modal-card">
@@ -111,7 +117,7 @@
     </div>
   </div>
 
-  <script src="config.js?v=4"></script>
-  <script type="module" src="app.js?v=4"></script>
+  <script src="config.js?v=5"></script>
+  <script type="module" src="app.js?v=5"></script>
 </body>
 </html>

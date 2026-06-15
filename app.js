@@ -32,6 +32,8 @@ const els = {
   viewHistory: $("view-history"),
   form: $("add-form"),
   itemInput: $("item-input"),
+  micBtn: $("mic-btn"),
+  toast: $("toast"),
   suggestions: $("suggestions"),
   storePicker: $("store-picker"),
   storeFilter: $("store-filter"),
@@ -408,6 +410,87 @@ async function deleteHistory(id) {
   catch (e) { console.error(e); setSync(false); }
 }
 
+// ── Kratka obavijest (toast) ───────────────────────────────────
+let toastTimer = null;
+function toast(msg) {
+  els.toast.textContent = msg;
+  els.toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => els.toast.classList.remove("show"), 2600);
+}
+
+// ── Glasovni unos (Web Speech API) ─────────────────────────────
+let recognition = null;
+let listening = false;
+const VOICE_CMD = /^(dodaj|dodati|daj|kupi|kupit|kupiti|treba(m|mo)?|trebalo bi)\s+/i;
+
+function initVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    els.micBtn.classList.add("hidden"); // preglednik ne podržava
+    return;
+  }
+  recognition = new SR();
+  recognition.lang = "hr-HR";
+  recognition.interimResults = true;
+  recognition.continuous = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = (e) => {
+    let interim = "", final = "";
+    for (const res of e.results) {
+      if (res.isFinal) final += res[0].transcript;
+      else interim += res[0].transcript;
+    }
+    if (final) {
+      processVoice(final);
+      els.itemInput.value = "";
+    } else {
+      els.itemInput.value = interim;
+    }
+  };
+  recognition.onend = () => stopVoiceUI();
+  recognition.onerror = (e) => {
+    stopVoiceUI();
+    if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+      toast("Mikrofon nije dopušten 🎤");
+    } else if (e.error === "no-speech") {
+      toast("Nisam ništa čuo 🤔");
+    }
+  };
+}
+
+function stopVoiceUI() {
+  listening = false;
+  els.micBtn.classList.remove("listening");
+  els.itemInput.placeholder = "Dodaj stavku (npr. mlijeko)";
+}
+
+function toggleVoice() {
+  if (!recognition) return;
+  if (listening) { recognition.stop(); return; }
+  try {
+    recognition.start();
+    listening = true;
+    els.micBtn.classList.add("listening");
+    els.itemInput.value = "";
+    els.itemInput.placeholder = "Slušam… 🎤";
+  } catch (e) { console.error(e); }
+}
+
+// Pretvori izgovoreno u stavke i dodaj ih
+function processVoice(text) {
+  let t = text.trim().replace(/[.!?]+$/, "").replace(VOICE_CMD, "");
+  const parts = t
+    .split(/\s*,\s*|\s+i\s+|\s+pa\s+|\s+te\s+/i)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (parts.length === 0) return;
+  const stores = sortStores([...newStores]);
+  parts.forEach((name) => addItem(name, stores));
+  toast(`Dodano: ${parts.join(", ")} ✓`);
+}
+
 // ── Event listeneri ────────────────────────────────────────────
 if (configured) {
   els.form.addEventListener("submit", (e) => {
@@ -461,6 +544,9 @@ if (configured) {
     view = view === "list" ? "history" : "list";
     render();
   });
+
+  els.micBtn.addEventListener("click", toggleVoice);
+  initVoice();
 
   // Sinkronizacija uživo: lista
   onSnapshot(
