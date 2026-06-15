@@ -110,13 +110,15 @@ code {
   flex: 1 1 100%;
 }
 .add-form input {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
+  width: 0; /* dopusti rast od nule, da gumbi ne prožderu širinu */
   padding: 14px;
-  font-size: 1rem;
+  font-size: 1.05rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--card);
+  color: var(--text);
 }
 .add-form input:focus {
   outline: none;
@@ -124,12 +126,12 @@ code {
 }
 
 .btn-mic {
-  flex-shrink: 0;
-  width: 52px;
+  flex: 0 0 46px;
+  width: 46px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--card);
-  font-size: 1.3rem;
+  font-size: 1.15rem;
   cursor: pointer;
 }
 .btn-mic:active { background: #e8f5e9; }
@@ -155,10 +157,10 @@ code {
 .btn-add:active { background: var(--green-dark); }
 /* Kompaktni "➕" u redu za unos */
 .input-row .btn-add {
-  flex-shrink: 0;
-  width: 52px;
-  padding: 14px 0;
-  font-size: 1.3rem;
+  flex: 0 0 46px;
+  width: 46px;
+  padding: 0;
+  font-size: 1.15rem;
 }
 
 /* Otkrivanje detalja (dućan / količina) */
