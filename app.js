@@ -12,14 +12,16 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  setDoc,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "15";
+const APP_VERSION = "16";
 
-// ── Fiksna lista dućana ────────────────────────────────────────
-const STORES = ["Konzum", "DM", "Lidl", "Tvornica Zdrave Hrane"];
+// ── Dućani (uredivi u Postavkama; spremaju se u Firestore) ─────
+const DEFAULT_STORES = ["Konzum", "DM", "Lidl", "Tvornica Zdrave Hrane"];
+let STORES = [...DEFAULT_STORES];
 
 // ── Količina: vrijednosti i jedinice ───────────────────────────
 const QTY_VALUES = ["", "0.5", "1", "1.5", "2", "2.5", "3", "4", "5", "6", "7", "8", "9", "10"];
@@ -34,13 +36,20 @@ const $ = (id) => document.getElementById(id);
 const els = {
   setupNotice: $("setup-notice"),
   appTitle: $("app-title"),
-  themeBtn: $("theme-btn"),
-  refreshBtn: $("refresh-btn"),
-  appVer: $("app-ver"),
-  nameBtn: $("name-btn"),
+  settingsBtn: $("settings-btn"),
   viewToggle: $("view-toggle"),
   viewList: $("view-list"),
   viewHistory: $("view-history"),
+  viewSettings: $("view-settings"),
+  settingsBack: $("settings-back"),
+  themeOptions: $("theme-options"),
+  settingsStores: $("settings-stores"),
+  addStoreForm: $("add-store-form"),
+  newStoreInput: $("new-store-input"),
+  nameForm: $("name-form"),
+  nameInput: $("name-input"),
+  refreshBtn: $("refresh-btn"),
+  appVer: $("app-ver"),
   form: $("add-form"),
   itemInput: $("item-input"),
   qtyValue: $("qty-value"),
@@ -98,14 +107,17 @@ function effectiveTheme() {
   return stored === "dark" || stored === "light" ? stored : (themeMedia.matches ? "dark" : "light");
 }
 function applyTheme() {
-  const dark = effectiveTheme() === "dark";
-  document.documentElement.classList.toggle("dark", dark);
-  els.themeBtn.textContent = dark ? "☀️" : "🌙";
+  document.documentElement.classList.toggle("dark", effectiveTheme() === "dark");
 }
-els.themeBtn.addEventListener("click", () => {
-  localStorage.setItem("theme", effectiveTheme() === "dark" ? "light" : "dark");
+function currentThemeChoice() {
+  const t = localStorage.getItem("theme");
+  return t === "dark" || t === "light" ? t : "auto";
+}
+function setThemeChoice(choice) {
+  if (choice === "auto") localStorage.removeItem("theme");
+  else localStorage.setItem("theme", choice);
   applyTheme();
-});
+}
 themeMedia.addEventListener("change", () => {
   if (!localStorage.getItem("theme")) applyTheme(); // prati sustav dok nije ručno postavljeno
 });
@@ -144,6 +156,7 @@ if (configured) {
 }
 const itemsCol = db ? collection(db, "items") : null;
 const purchasesCol = db ? collection(db, "purchases") : null;
+const settingsDoc = db ? doc(db, "settings", "app") : null;
 
 // ── Stanje ─────────────────────────────────────────────────────
 let items = [];
@@ -210,41 +223,38 @@ function deaccent(s) {
 }
 // Prepoznavanje dućana u izgovorenom tekstu
 const VOICE_PREP = new Set(["iz", "u", "kod", "na", "sa", "s", "od"]);
-const VOICE_SINGLE_STORE = [["Konzum", "konzum"], ["Lidl", "lidl"], ["DM", "dm"]];
-const VOICE_TZH_WORDS = new Set([
-  "tvornica", "tvornice", "tvornici", "tvornicu",
-  "zdrave", "zdrava", "zdravu", "zdravi",
-  "hrane", "hranu", "hrana", "tzh",
-]);
+// Usporedba korijena riječi (tolerira padeže: konzuma~konzum, tvornice~tvornica)
+function sameStem(token, word) {
+  const n = Math.min(token.length, word.length);
+  if (n < 3) return token === word;
+  const k = Math.max(3, n - 2);
+  return token.slice(0, k) === word.slice(0, k);
+}
 
-// Iz fraze ("mlijeko iz konzuma") izvuci naziv i dućan(e)
+// Iz fraze ("mlijeko iz konzuma") izvuci naziv i dućan(e) — radi za bilo
+// koje dućane iz trenutne liste STORES
 function extractStores(phrase) {
   const words = phrase.split(/\s+/).filter(Boolean);
   const norm = words.map(deaccent);
   const remove = new Set();
-  const stores = [];
+  const found = [];
 
-  // Tvornica Zdrave Hrane (više riječi)
-  const tzh = norm.map((w, i) => (VOICE_TZH_WORDS.has(w) ? i : -1)).filter((i) => i >= 0);
-  if (tzh.length) {
-    stores.push("Tvornica Zdrave Hrane");
-    tzh.forEach((i) => remove.add(i));
-    if (tzh[0] > 0 && VOICE_PREP.has(norm[tzh[0] - 1])) remove.add(tzh[0] - 1);
-  }
-  // Konzum / Lidl / DM (jednorječni, uz padeže: konzuma, lidlu…)
-  for (const [store, stem] of VOICE_SINGLE_STORE) {
+  for (const store of STORES) {
+    const sw = deaccent(store).split(/\s+/).filter((w) => w.length >= 2);
+    const idxs = [];
     for (let i = 0; i < norm.length; i++) {
       if (remove.has(i)) continue;
-      if (norm[i].startsWith(stem) && norm[i].length <= stem.length + 3) {
-        stores.push(store);
-        remove.add(i);
-        if (i > 0 && VOICE_PREP.has(norm[i - 1])) remove.add(i - 1);
-        break;
-      }
+      if (sw.some((w) => sameStem(norm[i], w))) idxs.push(i);
+    }
+    if (idxs.length) {
+      found.push(store);
+      idxs.forEach((i) => remove.add(i));
+      const first = Math.min(...idxs);
+      if (first > 0 && VOICE_PREP.has(norm[first - 1])) remove.add(first - 1);
     }
   }
   const name = words.filter((_, i) => !remove.has(i)).join(" ").trim();
-  return { name, stores: [...new Set(stores)] };
+  return { name, stores: [...new Set(found)] };
 }
 
 // ── Toast (s opcionalnom akcijom, npr. Poništi) ────────────────
@@ -345,10 +355,13 @@ function closeQtySheet(val) {
 function render() {
   els.viewList.classList.toggle("hidden", view !== "list" || !configured);
   els.viewHistory.classList.toggle("hidden", view !== "history");
+  els.viewSettings.classList.toggle("hidden", view !== "settings");
   els.viewToggle.textContent = view === "list" ? "📜" : "🛒";
-  els.appTitle.textContent = view === "list" ? "🛒 Lista za kupovinu" : "📜 Povijest";
+  els.appTitle.textContent =
+    view === "settings" ? "⚙️ Postavke" : view === "history" ? "📜 Povijest" : "🛒 Lista za kupovinu";
   if (view === "list") renderList();
-  else renderHistory();
+  else if (view === "history") renderHistory();
+  else renderSettings();
 }
 
 function renderStorePicker() {
@@ -583,6 +596,39 @@ function renderHistory() {
               </li>`;
     })
     .join("");
+}
+
+// ── Render: POSTAVKE ───────────────────────────────────────────
+function renderSettings() {
+  // Tema — istakni odabir
+  const choice = currentThemeChoice();
+  [...els.themeOptions.querySelectorAll(".seg-btn")].forEach((b) =>
+    b.classList.toggle("selected", b.dataset.theme === choice)
+  );
+  // Dućani
+  els.settingsStores.innerHTML = STORES.map(
+    (s) =>
+      `<li class="item"><div class="item-body"><div class="item-name">${esc(s)}</div></div>
+         <button class="btn-del" data-act="store-del" data-store="${esc(s)}" aria-label="Obriši">×</button></li>`
+  ).join("");
+  // Ime
+  els.nameInput.value = userName;
+}
+
+// Spremi listu dućana u Firestore (zajednički)
+async function saveStores(list) {
+  try {
+    await setDoc(settingsDoc, { stores: list }, { merge: true });
+  } catch (e) { console.error(e); setSync(false); }
+}
+function addStore(name) {
+  name = name.trim();
+  if (!name) return;
+  if (STORES.some((s) => s.toLowerCase() === name.toLowerCase())) { toast("Taj dućan već postoji"); return; }
+  saveStores([...STORES, name]);
+}
+function removeStore(name) {
+  saveStores(STORES.filter((s) => s !== name));
 }
 
 // ── Akcije: lista ──────────────────────────────────────────────
@@ -901,6 +947,8 @@ if (configured) {
       hideSuggestions();
       els.itemInput.focus();
     }
+    else if (act === "theme-set") { setThemeChoice(btn.dataset.theme); renderSettings(); }
+    else if (act === "store-del") removeStore(btn.dataset.store);
   });
 
   els.storeFilter.addEventListener("change", render);
@@ -920,15 +968,24 @@ if (configured) {
     renderHistory();
   });
   els.viewToggle.addEventListener("click", () => {
-    view = view === "list" ? "history" : "list";
+    view = view === "history" ? "list" : "history";
     render();
   });
-  els.nameBtn.addEventListener("click", async () => {
-    const v = await askSheet("Tvoje ime", userName, "npr. Vedran");
-    if (v === null) return;
-    userName = v.trim();
+  els.settingsBtn.addEventListener("click", () => { view = "settings"; render(); });
+  els.settingsBack.addEventListener("click", () => { view = "list"; render(); });
+
+  // Dodavanje dućana
+  els.addStoreForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    addStore(els.newStoreInput.value);
+    els.newStoreInput.value = "";
+  });
+  // Spremanje imena
+  els.nameForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    userName = els.nameInput.value.trim();
     localStorage.setItem("userName", userName);
-    toast(userName ? `Bok, ${userName}! 👋` : "Ime uklonjeno");
+    toast(userName ? `Spremljeno: ${userName} 👋` : "Ime uklonjeno");
   });
 
   // Otkrivanje detalja (dućan/količina)
@@ -969,6 +1026,15 @@ if (configured) {
 
   onSnapshot(purchasesCol, (snap) => {
     purchases = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    render();
+  }, (err) => { console.error(err); setSync(false); });
+
+  // Postavke (dućani) — zajednički za sve uređaje
+  onSnapshot(settingsDoc, (snap) => {
+    const data = snap.exists() ? snap.data() : null;
+    STORES = data && Array.isArray(data.stores) && data.stores.length
+      ? data.stores.filter((s) => typeof s === "string" && s.trim())
+      : [...DEFAULT_STORES];
     render();
   }, (err) => { console.error(err); setSync(false); });
 }

@@ -16,17 +16,16 @@
     })();
   </script>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="styles.css?v=15" />
+  <link rel="stylesheet" href="styles.css?v=16" />
 </head>
 <body>
   <header class="app-header">
     <div class="header-left">
-      <button id="theme-btn" class="btn-icon" aria-label="Svijetla/tamna tema">🌙</button>
       <h1 id="app-title">🛒 Lista za kupovinu</h1>
     </div>
     <div class="header-actions">
-      <button id="name-btn" class="btn-icon" aria-label="Tvoje ime">👤</button>
       <button id="view-toggle" class="btn-icon" aria-label="Povijest">📜</button>
+      <button id="settings-btn" class="btn-icon" aria-label="Postavke">⚙️</button>
       <span id="sync-dot" class="sync-dot" title="Status veze"></span>
     </div>
   </header>
@@ -120,10 +119,44 @@
         <ul id="history-list" class="list"></ul>
       </section>
     </div>
-    <footer class="app-footer">
-      <button id="refresh-btn" class="btn-refresh" type="button">↻ Tvrdo osvježi</button>
-      <span id="app-ver" class="ver"></span>
-    </footer>
+    <!-- ══════════ PRIKAZ: POSTAVKE ══════════ -->
+    <div id="view-settings" class="hidden">
+      <button id="settings-back" class="btn-back" type="button">← Natrag na listu</button>
+
+      <section class="settings-block">
+        <h2 class="section-title">Tema</h2>
+        <div id="theme-options" class="seg">
+          <button type="button" class="seg-btn" data-act="theme-set" data-theme="light">☀️ Svijetlo</button>
+          <button type="button" class="seg-btn" data-act="theme-set" data-theme="dark">🌙 Tamno</button>
+          <button type="button" class="seg-btn" data-act="theme-set" data-theme="auto">📱 Auto</button>
+        </div>
+      </section>
+
+      <section class="settings-block">
+        <h2 class="section-title">Dućani</h2>
+        <p class="hint">Zajednički za sve uređaje. Koriste se pri dodavanju stavki i u povijesti.</p>
+        <ul id="settings-stores" class="list"></ul>
+        <form id="add-store-form" class="inline-form">
+          <input id="new-store-input" type="text" placeholder="Novi dućan…" autocomplete="off" />
+          <button type="submit" class="btn-add">➕</button>
+        </form>
+      </section>
+
+      <section class="settings-block">
+        <h2 class="section-title">Tvoje ime</h2>
+        <form id="name-form" class="inline-form">
+          <input id="name-input" type="text" placeholder="npr. Vedran" autocomplete="off" />
+          <button type="submit" class="btn-add">Spremi</button>
+        </form>
+        <p class="hint">Sprema se samo na ovom uređaju (oznaka tko je dodao/kupio).</p>
+      </section>
+
+      <section class="settings-block">
+        <h2 class="section-title">Aplikacija</h2>
+        <button id="refresh-btn" class="btn-refresh" type="button">↻ Očisti cache i osvježi</button>
+        <span id="app-ver" class="ver"></span>
+      </section>
+    </div>
   </main>
 
   <!-- Kratka obavijest (toast) -->
@@ -170,7 +203,7 @@
     </div>
   </div>
 
-  <script src="config.js?v=15"></script>
-  <script type="module" src="app.js?v=15"></script>
+  <script src="config.js?v=16"></script>
+  <script type="module" src="app.js?v=16"></script>
 </body>
 </html>

@@ -22,5 +22,10 @@ service cloud.firestore {
     match /purchases/{purchaseId} {
       allow read, write: if true;
     }
+
+    // Postavke aplikacije (npr. lista dućana)
+    match /settings/{docId} {
+      allow read, write: if true;
+    }
   }
 }
