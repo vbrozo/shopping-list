@@ -98,7 +98,20 @@
     </div>
   </main>
 
-  <script src="config.js?v=3"></script>
-  <script type="module" src="app.js?v=3"></script>
+  <!-- ══════════ DIJALOG: spremanje u povijest ══════════ -->
+  <div id="archive-modal" class="modal hidden">
+    <div class="modal-card">
+      <h2>Spremi u povijest</h2>
+      <p class="hint">Odaberi dućan i (po želji) upiši cijenu za svaku stavku.</p>
+      <div id="archive-rows"></div>
+      <div class="modal-actions">
+        <button id="archive-cancel" class="btn-text">Odustani</button>
+        <button id="archive-confirm" class="btn-add">Spremi ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js?v=4"></script>
+  <script type="module" src="app.js?v=4"></script>
 </body>
 </html>

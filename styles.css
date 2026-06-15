@@ -377,4 +377,65 @@ code {
   padding: 24px;
 }
 
+/* Dijalog za spremanje u povijest */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+  padding: 0;
+}
+.modal-card {
+  background: var(--bg);
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+}
+@media (min-width: 560px) {
+  .modal { align-items: center; }
+  .modal-card { border-radius: var(--radius); }
+}
+.modal-card h2 { margin: 0 0 4px; }
+
+.archive-row {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.archive-row .item-name {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.store-picker.single {
+  margin-bottom: 8px;
+}
+.archive-price {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+}
+.modal-actions .btn-add {
+  flex: 1;
+}
+.modal-actions .btn-text {
+  color: var(--muted);
+}
+
 .hidden { display: none !important; }

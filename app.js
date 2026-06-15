@@ -50,6 +50,10 @@ const els = {
   emptyHistory: $("empty-history"),
   timelineSection: $("timeline-section"),
   historyList: $("history-list"),
+  archiveModal: $("archive-modal"),
+  archiveRows: $("archive-rows"),
+  archiveCancel: $("archive-cancel"),
+  archiveConfirm: $("archive-confirm"),
 };
 
 if (!configured) {
@@ -342,26 +346,59 @@ function quickAdd(name, store) {
   addItem(name, store ? [store] : []);
 }
 
-// Arhiviraj kupljene stavke u povijest (jedan zapis po dućanu stavke)
-async function archiveBought() {
+// Otvori dijalog za spremanje u povijest (odabir dućana + cijene po stavci)
+function openArchiveModal() {
   const bought = items.filter((i) => i.bought);
   if (bought.length === 0) return;
-  if (!confirm(`Spremiti ${bought.length} kupljenih stavki u povijest?`)) return;
+
+  els.archiveRows.innerHTML = bought
+    .map((it) => {
+      const primary = sortStores(getStores(it))[0] || "";
+      const chips = STORES.map(
+        (s) =>
+          `<button type="button" class="store-chip ${s === primary ? "selected" : ""}"
+             data-act="archive-store" data-store="${esc(s)}">${esc(s)}</button>`
+      ).join("");
+      const priceVal = it.price != null ? esc(String(it.price)) : "";
+      return `
+        <div class="archive-row" data-id="${it.id}">
+          <div class="item-name">${esc(it.name)}</div>
+          <div class="store-picker single">${chips}</div>
+          <input class="archive-price" type="text" inputmode="decimal"
+                 placeholder="cijena (npr. 1,99)" value="${priceVal}" />
+        </div>`;
+    })
+    .join("");
+
+  els.archiveModal.classList.remove("hidden");
+}
+
+function closeArchiveModal() {
+  els.archiveModal.classList.add("hidden");
+}
+
+// Potvrdi spremanje: pročitaj odabrane dućane/cijene i arhiviraj
+async function confirmArchive() {
+  const rows = [...els.archiveRows.querySelectorAll(".archive-row")];
   try {
     const batch = writeBatch(db);
-    for (const it of bought) {
-      const sts = getStores(it);
-      // Ako stavka ima više dućana, koristi prvi (po redu STORES) kao dućan kupnje
-      const store = sts.length ? sortStores(sts)[0] : null;
+    for (const row of rows) {
+      const id = row.dataset.id;
+      const it = items.find((i) => i.id === id);
+      if (!it) continue;
+      const selected = row.querySelector(".store-chip.selected");
+      const store = selected ? selected.dataset.store : null;
+      const price = parsePrice(row.querySelector(".archive-price").value);
       batch.set(doc(purchasesCol), {
         name: it.name,
         store,
-        price: typeof it.price === "number" ? it.price : null,
+        price,
         purchased_at: it.bought_at || Date.now(),
       });
-      batch.delete(doc(db, "items", it.id));
+      batch.delete(doc(db, "items", id));
     }
     await batch.commit();
+    closeArchiveModal();
   } catch (e) { console.error(e); setSync(false); }
 }
 
@@ -396,6 +433,13 @@ if (configured) {
       newStores.has(store) ? newStores.delete(store) : newStores.add(store);
       renderStorePicker();
     }
+    else if (act === "archive-store") {
+      // Jedan dućan po retku: ako je već odabran, odznači; inače odaberi samo njega
+      const row = btn.closest(".archive-row");
+      const wasSelected = btn.classList.contains("selected");
+      row.querySelectorAll(".store-chip").forEach((c) => c.classList.remove("selected"));
+      if (!wasSelected) btn.classList.add("selected");
+    }
     else if (act === "price") editPrice(id);
     else if (act === "del") deleteItem(id);
     else if (act === "del-hist") deleteHistory(id);
@@ -403,7 +447,12 @@ if (configured) {
   });
 
   els.storeFilter.addEventListener("change", render);
-  els.clearBought.addEventListener("click", archiveBought);
+  els.clearBought.addEventListener("click", openArchiveModal);
+  els.archiveCancel.addEventListener("click", closeArchiveModal);
+  els.archiveConfirm.addEventListener("click", confirmArchive);
+  els.archiveModal.addEventListener("click", (e) => {
+    if (e.target === els.archiveModal) closeArchiveModal();
+  });
   els.historySearch.addEventListener("input", (e) => {
     historyQuery = e.target.value;
     renderHistory();
