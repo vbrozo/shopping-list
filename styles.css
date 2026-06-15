@@ -617,8 +617,10 @@ code {
   font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
-  padding: 2px 4px;
+  padding: 6px 8px;
 }
+/* toast je pointer-events:none; gumb mora biti klikabilan, ali samo dok je prikazan */
+.toast.show .toast-action { pointer-events: auto; }
 
 .hidden { display: none !important; }
 
