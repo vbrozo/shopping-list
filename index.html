@@ -16,16 +16,16 @@
     })();
   </script>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="styles.css?v=19" />
+  <link rel="stylesheet" href="styles.css?v=20" />
 </head>
 <body>
   <header class="app-header">
     <div class="header-left">
-      <h1 id="app-title">🛒 Lista za kupovinu</h1>
+      <h1 id="app-title"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"></path></svg> Lista za kupovinu</h1>
     </div>
     <div class="header-actions">
-      <button id="view-toggle" class="btn-icon" aria-label="Povijest">📜</button>
-      <button id="settings-btn" class="btn-icon" aria-label="Postavke">⚙️</button>
+      <button id="view-toggle" class="btn-icon" aria-label="Povijest"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></button>
+      <button id="settings-btn" class="btn-icon" aria-label="Postavke"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
       <span id="sync-dot" class="sync-dot" title="Status veze"></span>
     </div>
   </header>
@@ -33,7 +33,7 @@
   <main class="container">
     <!-- Poruka ako Firebase nije postavljen -->
     <div id="setup-notice" class="notice hidden">
-      <h2>⚙️ Potrebno je postaviti bazu</h2>
+      <h2>Potrebno je postaviti bazu</h2>
       <p>Otvori datoteku <code>config.js</code> i upiši svoju <strong>Firebase konfiguraciju</strong>.
          Upute se nalaze u <code>README.md</code>.</p>
     </div>
@@ -50,12 +50,12 @@
               placeholder="Dodaj stavku (npr. mlijeko)"
               autocomplete="off"
               required />
-            <button type="button" id="mic-btn" class="btn-mic" aria-label="Glasovni unos">🎤</button>
-            <button type="submit" class="btn-add" aria-label="Dodaj">➕</button>
+            <button type="button" id="mic-btn" class="btn-mic" aria-label="Glasovni unos"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v1a7 7 0 0 1-14 0v-1"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg></button>
+            <button type="submit" class="btn-add" aria-label="Dodaj"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
           </div>
           <ul id="suggest-list" class="suggest-list hidden"></ul>
         </div>
-        <button type="button" id="details-toggle" class="details-toggle">🏪 Dućan i količina</button>
+        <button type="button" id="details-toggle" class="details-toggle"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg> Dućan i količina</button>
         <div id="add-details" class="add-details hidden">
           <span class="picker-label">Količina:</span>
           <div class="qty-row">
@@ -69,7 +69,7 @@
 
       <!-- Brzi unos na temelju prijašnjih kupovina -->
       <section id="quick-add-section" class="hidden">
-        <h2 class="section-title">Brzi unos 💡</h2>
+        <h2 class="section-title">Brzi unos</h2>
         <div id="quick-add" class="chips"></div>
       </section>
 
@@ -79,21 +79,21 @@
         <select id="store-filter">
           <option value="">Svi</option>
         </select>
-        <button id="group-toggle" class="btn-toggle" type="button">📑 Grupiraj</button>
+        <button id="group-toggle" class="btn-toggle" type="button"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg> Grupiraj</button>
       </div>
 
       <!-- Aktivne stavke -->
       <section>
         <h2 class="section-title">Za kupiti <span id="active-count" class="count">0</span></h2>
         <ul id="active-list" class="list"></ul>
-        <p id="empty-active" class="empty hidden">Lista je prazna. Dodaj prvu stavku! 🎉</p>
+        <p id="empty-active" class="empty hidden">Lista je prazna. Dodaj prvu stavku!</p>
       </section>
 
       <!-- Kupljene stavke -->
       <section id="bought-section" class="hidden">
         <div class="section-header">
           <h2 class="section-title">Kupljeno <span id="bought-count" class="count">0</span></h2>
-          <button id="clear-bought" class="btn-save">📦 Spremi u povijest</button>
+          <button id="clear-bought" class="btn-save"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg> Spremi u povijest</button>
         </div>
         <ul id="bought-list" class="list bought"></ul>
       </section>
@@ -108,14 +108,14 @@
 
       <!-- Pregled cijena po artiklu -->
       <section>
-        <h2 class="section-title">Cijene po artiklu 📊</h2>
+        <h2 class="section-title">Cijene po artiklu</h2>
         <ul id="price-list" class="list"></ul>
         <p id="empty-history" class="empty hidden">Još nema spremljenih kupovina.</p>
       </section>
 
       <!-- Kronološka povijest -->
       <section id="timeline-section" class="hidden">
-        <h2 class="section-title">Povijest kupovina 📅</h2>
+        <h2 class="section-title">Povijest kupovina</h2>
         <ul id="history-list" class="list"></ul>
       </section>
     </div>
@@ -126,9 +126,9 @@
       <section class="settings-block">
         <h2 class="section-title">Tema</h2>
         <div id="theme-options" class="seg">
-          <button type="button" class="seg-btn" data-act="theme-set" data-theme="light">☀️ Svijetlo</button>
-          <button type="button" class="seg-btn" data-act="theme-set" data-theme="dark">🌙 Tamno</button>
-          <button type="button" class="seg-btn" data-act="theme-set" data-theme="auto">📱 Auto</button>
+          <button type="button" class="seg-btn" data-act="theme-set" data-theme="light"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="22"></line><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"></line><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"></line><line x1="2" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="22" y2="12"></line><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"></line><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"></line></svg> Svijetlo</button>
+          <button type="button" class="seg-btn" data-act="theme-set" data-theme="dark"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"></path></svg> Tamno</button>
+          <button type="button" class="seg-btn" data-act="theme-set" data-theme="auto"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"></rect><line x1="11" y1="18" x2="13" y2="18"></line></svg> Auto</button>
         </div>
       </section>
 
@@ -138,7 +138,7 @@
         <ul id="settings-stores" class="list"></ul>
         <form id="add-store-form" class="inline-form">
           <input id="new-store-input" type="text" placeholder="Novi dućan…" autocomplete="off" />
-          <button type="submit" class="btn-add">➕</button>
+          <button type="submit" class="btn-add"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
         </form>
       </section>
 
@@ -153,7 +153,7 @@
 
       <section class="settings-block">
         <h2 class="section-title">Aplikacija</h2>
-        <button id="refresh-btn" class="btn-refresh" type="button">↻ Očisti cache i osvježi</button>
+        <button id="refresh-btn" class="btn-refresh" type="button"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"></path></svg> Očisti cache i osvježi</button>
         <span id="app-ver" class="ver"></span>
       </section>
     </div>
@@ -230,7 +230,7 @@
     </div>
   </div>
 
-  <script src="config.js?v=19"></script>
-  <script type="module" src="app.js?v=19"></script>
+  <script src="config.js?v=20"></script>
+  <script type="module" src="app.js?v=20"></script>
 </body>
 </html>

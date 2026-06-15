@@ -17,7 +17,30 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "19";
+const APP_VERSION = "20";
+
+// ── Monokromatske ikone (currentColor — prate temu) ────────────
+const ICONS = {
+  cart: '<circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"></path>',
+  clock: '<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>',
+  gear: '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>',
+  mic: '<path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v1a7 7 0 0 1-14 0v-1"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line>',
+  plus: '<line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>',
+  bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path>',
+  list: '<line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line>',
+  pin: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle>',
+  tag: '<path d="M20.59 13.41 12 22l-9-9V3h10l7.59 7.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line>',
+  user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>',
+  trash: '<polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>',
+  star: '<polygon points="12 2 15.1 8.3 22 9.3 17 14.1 18.2 21 12 17.8 5.8 21 7 14.1 2 9.3 8.9 8.3 12 2"></polygon>',
+  sun: '<circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="22"></line><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"></line><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"></line><line x1="2" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="22" y2="12"></line><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"></line><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"></line>',
+  moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"></path>',
+  phone: '<rect x="6" y="2" width="12" height="20" rx="2"></rect><line x1="11" y1="18" x2="13" y2="18"></line>',
+  refresh: '<polyline points="23 4 23 10 17 10"></polyline><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"></path>',
+};
+function icon(name) {
+  return `<svg class="icn" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ""}</svg>`;
+}
 
 // ── Dućani (uredivi u Postavkama; spremaju se u Firestore) ─────
 const DEFAULT_STORES = ["Konzum", "DM", "Lidl", "Tvornica Zdrave Hrane"];
@@ -420,9 +443,11 @@ function render() {
   els.viewList.classList.toggle("hidden", view !== "list" || !configured);
   els.viewHistory.classList.toggle("hidden", view !== "history");
   els.viewSettings.classList.toggle("hidden", view !== "settings");
-  els.viewToggle.textContent = view === "list" ? "📜" : "🛒";
-  els.appTitle.textContent =
-    view === "settings" ? "⚙️ Postavke" : view === "history" ? "📜 Povijest" : "🛒 Lista za kupovinu";
+  els.viewToggle.innerHTML = view === "list" ? icon("clock") : icon("cart");
+  els.appTitle.innerHTML =
+    view === "settings" ? `${icon("gear")} Postavke`
+      : view === "history" ? `${icon("clock")} Povijest`
+      : `${icon("cart")} Lista za kupovinu`;
   if (view === "list") renderList();
   else if (view === "history") renderHistory();
   else renderSettings();
@@ -435,7 +460,9 @@ function renderStorePicker() {
          data-act="toggle-new-store" data-store="${esc(s)}">${esc(s)}</button>`
   ).join("");
   const sel = sortStores([...newStores]);
-  els.detailsToggle.textContent = sel.length ? `🏪 ${sel.join(", ")} ✓` : "🏪 Dućan i količina";
+  els.detailsToggle.innerHTML = sel.length
+    ? `${icon("bag")} ${esc(sel.join(", "))} ✓`
+    : `${icon("bag")} Dućan i količina`;
 }
 
 // Predloži uobičajeni dućan za upisani naziv (ako korisnik nije ručno birao)
@@ -523,18 +550,18 @@ function renderItem(item) {
   } else {
     const shown = stores.slice(0, 2).map(esc).join(", ");
     const extra = stores.length > 2 ? ` +${stores.length - 2}` : "";
-    storeText = `📍 ${shown}${extra}`;
+    storeText = `${icon("pin")} ${shown}${extra}`;
   }
   const meta = [storeText];
   const priceTxt = item.bought ? fmtPrice(item.price) : null;
-  if (priceTxt) meta.push(`💰 ${priceTxt}`);
-  if (item.added_by) meta.push(`👤 ${esc(item.added_by)}`);
+  if (priceTxt) meta.push(`${icon("tag")} ${priceTxt}`);
+  if (item.added_by) meta.push(`${icon("user")} ${esc(item.added_by)}`);
 
   const qtyTag = item.qty ? `<span class="qty-tag">×${esc(item.qty)}</span>` : "";
 
   return `
     <li class="item swipeable ${item.bought ? "done" : ""}" data-id="${item.id}">
-      <div class="item-bg"><span class="item-bg-icon">🗑️ Obriši</span></div>
+      <div class="item-bg"><span class="item-bg-icon">${icon("trash")} Obriši</span></div>
       <div class="item-inner">
         <button class="check" data-act="toggle" data-id="${item.id}" aria-label="Označi kupljeno">
           ${item.bought ? "✓" : ""}
@@ -616,7 +643,7 @@ function renderHistory() {
         .map(([st, ps]) => {
           const extra = ps.count > 1 ? ` <small>(min ${ps.min.toFixed(2)})</small>` : "";
           return `<div class="price-row ${st === cheapest ? "cheapest" : ""}">
-                    <span>${st === cheapest ? "🏆 " : ""}${esc(st)}</span>
+                    <span>${st === cheapest ? icon("star") + " " : ""}${esc(st)}</span>
                     <span>${ps.last.toFixed(2)} €${extra}</span>
                   </div>`;
         })
@@ -636,10 +663,10 @@ function renderHistory() {
   els.historyList.innerHTML = timeline
     .map((p) => {
       const parts = [fmtDate(p.purchased_at)];
-      if (p.store) parts.push(esc(p.store));
+      if (p.store) parts.push(`${icon("pin")} ${esc(p.store)}`);
       const priceTxt = fmtPrice(p.price);
-      if (priceTxt) parts.push(priceTxt);
-      if (p.bought_by) parts.push("👤 " + esc(p.bought_by));
+      if (priceTxt) parts.push(`${icon("tag")} ${priceTxt}`);
+      if (p.bought_by) parts.push(`${icon("user")} ${esc(p.bought_by)}`);
       return `<li class="item">
                 <div class="item-main" data-act="edit-hist" data-id="${p.id}">
                   <div class="item-name">${esc(p.name)}${p.qty ? ` ×${esc(p.qty)}` : ""}</div>
@@ -823,8 +850,8 @@ function initVoice() {
   recognition.onend = () => stopVoiceUI();
   recognition.onerror = (e) => {
     stopVoiceUI();
-    if (e.error === "not-allowed" || e.error === "service-not-allowed") toast("Mikrofon nije dopušten 🎤");
-    else if (e.error === "no-speech") toast("Nisam ništa čuo 🤔");
+    if (e.error === "not-allowed" || e.error === "service-not-allowed") toast("Mikrofon nije dopušten");
+    else if (e.error === "no-speech") toast("Nisam ništa čuo");
   };
 }
 function stopVoiceUI() {
@@ -840,7 +867,7 @@ function toggleVoice() {
     listening = true;
     els.micBtn.classList.add("listening");
     els.itemInput.value = "";
-    els.itemInput.placeholder = "Slušam… 🎤";
+    els.itemInput.placeholder = "Slušam…";
   } catch (e) { console.error(e); }
 }
 function processVoice(text) {
@@ -1024,7 +1051,7 @@ if (configured) {
     userName = els.nameInput.value.trim();
     localStorage.setItem("userName", userName);
     nameEditing = false;
-    toast(userName ? `Spremljeno: ${userName} 👋` : "Ime uklonjeno");
+    toast(userName ? `Spremljeno: ${userName}` : "Ime uklonjeno");
     renderSettings();
   });
 
