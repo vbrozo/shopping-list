@@ -16,7 +16,7 @@
     })();
   </script>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="styles.css?v=18" />
+  <link rel="stylesheet" href="styles.css?v=19" />
 </head>
 <body>
   <header class="app-header">
@@ -175,6 +175,35 @@
     </div>
   </div>
 
+  <!-- ══════════ BOTTOM-SHEET: uređivanje zapisa povijesti ══════════ -->
+  <div id="hist-sheet" class="modal hidden">
+    <div class="modal-card">
+      <h2>Uredi zapis</h2>
+      <label class="sheet-label">Naziv</label>
+      <input id="hist-name" class="sheet-input" type="text" autocomplete="off" />
+
+      <label class="sheet-label">Količina</label>
+      <div class="qty-row">
+        <select id="hist-qty-value" class="qty-select"></select>
+        <div id="hist-qty-units" class="qty-units"></div>
+      </div>
+
+      <label class="sheet-label">Dućan</label>
+      <div id="hist-stores" class="store-picker"></div>
+
+      <label class="sheet-label">Cijena</label>
+      <input id="hist-price" class="sheet-input" type="text" inputmode="decimal" placeholder="npr. 1,99" />
+
+      <label class="sheet-label">Datum</label>
+      <input id="hist-date" class="sheet-input" type="date" />
+
+      <div class="modal-actions">
+        <button id="hist-cancel" class="btn-text">Odustani</button>
+        <button id="hist-save" class="btn-add">Spremi ✓</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══════════ BOTTOM-SHEET: uređivanje stavke ══════════ -->
   <div id="edit-sheet" class="modal hidden">
     <div class="modal-card">
@@ -201,7 +230,7 @@
     </div>
   </div>
 
-  <script src="config.js?v=18"></script>
-  <script type="module" src="app.js?v=18"></script>
+  <script src="config.js?v=19"></script>
+  <script type="module" src="app.js?v=19"></script>
 </body>
 </html>

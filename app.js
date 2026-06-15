@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "18";
+const APP_VERSION = "19";
 
 // ── Dućani (uredivi u Postavkama; spremaju se u Firestore) ─────
 const DEFAULT_STORES = ["Konzum", "DM", "Lidl", "Tvornica Zdrave Hrane"];
@@ -63,6 +63,15 @@ const els = {
   editPrice: $("edit-price"),
   editSave: $("edit-save"),
   editCancel: $("edit-cancel"),
+  histSheet: $("hist-sheet"),
+  histName: $("hist-name"),
+  histQtyValue: $("hist-qty-value"),
+  histQtyUnits: $("hist-qty-units"),
+  histStores: $("hist-stores"),
+  histPrice: $("hist-price"),
+  histDate: $("hist-date"),
+  histSave: $("hist-save"),
+  histCancel: $("hist-cancel"),
   micBtn: $("mic-btn"),
   detailsToggle: $("details-toggle"),
   addDetails: $("add-details"),
@@ -164,6 +173,9 @@ let historyQuery = "";
 let editId = null; // stavka koja se trenutno uređuje u editoru
 let editUnit = "kom"; // odabrana jedinica u editoru
 const editStores = new Set(); // odabrani dućani u editoru
+let histId = null; // zapis povijesti koji se uređuje
+let histUnit = "kom"; // jedinica u editoru povijesti
+let histStore = ""; // dućan u editoru povijesti (jedan)
 let groupByStore = localStorage.getItem("groupByStore") === "1";
 let userName = localStorage.getItem("userName") || "";
 let storesTouched = false; // je li korisnik ručno mijenjao dućane u formi
@@ -186,6 +198,16 @@ function fmtPrice(p) {
 function fmtDate(ms) {
   if (!ms) return "";
   return new Date(ms).toLocaleDateString("hr-HR", { day: "numeric", month: "numeric", year: "numeric" });
+}
+function msToDateInput(ms) {
+  const d = new Date(ms || Date.now());
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+function dateInputToMs(v, fallback) {
+  if (!v) return fallback;
+  const ms = new Date(v + "T12:00:00").getTime();
+  return isNaN(ms) ? fallback : ms;
 }
 function parsePrice(str) {
   if (str == null) return null;
@@ -348,6 +370,48 @@ async function saveEdit() {
       price: parsePrice(els.editPrice.value),
     });
     closeEditSheet();
+  } catch (e) { console.error(e); setSync(false); }
+}
+
+// ── Editor zapisa povijesti ────────────────────────────────────
+function openHistSheet(id) {
+  const p = purchases.find((x) => x.id === id);
+  if (!p) return;
+  histId = id;
+  els.histName.value = p.name;
+  const { value, unit } = parseQty(p.qty || "");
+  histUnit = unit;
+  els.histQtyValue.innerHTML = qtyOptionsHTML(value);
+  els.histQtyUnits.innerHTML = unitChipsHTML(histUnit, "hist-qty-unit");
+  histStore = p.store || "";
+  renderHistStores();
+  els.histPrice.value = p.price != null ? String(p.price) : "";
+  els.histDate.value = msToDateInput(p.purchased_at);
+  els.histSheet.classList.remove("hidden");
+}
+function renderHistStores() {
+  els.histStores.innerHTML = STORES
+    .map((s) => `<button type="button" class="store-chip ${s === histStore ? "selected" : ""}" data-act="hist-store" data-store="${esc(s)}">${esc(s)}</button>`)
+    .join("");
+}
+function closeHistSheet() {
+  els.histSheet.classList.add("hidden");
+  histId = null;
+}
+async function saveHist() {
+  if (!histId) return;
+  const name = els.histName.value.trim();
+  if (!name) { toast("Naziv ne može biti prazan"); return; }
+  const p = purchases.find((x) => x.id === histId);
+  try {
+    await updateDoc(doc(db, "purchases", histId), {
+      name,
+      qty: buildQty(els.histQtyValue.value, histUnit) || null,
+      store: histStore || null,
+      price: parsePrice(els.histPrice.value),
+      purchased_at: dateInputToMs(els.histDate.value, p ? p.purchased_at : Date.now()),
+    });
+    closeHistSheet();
   } catch (e) { console.error(e); setSync(false); }
 }
 
@@ -577,7 +641,7 @@ function renderHistory() {
       if (priceTxt) parts.push(priceTxt);
       if (p.bought_by) parts.push("👤 " + esc(p.bought_by));
       return `<li class="item">
-                <div class="item-body">
+                <div class="item-main" data-act="edit-hist" data-id="${p.id}">
                   <div class="item-name">${esc(p.name)}${p.qty ? ` ×${esc(p.qty)}` : ""}</div>
                   <div class="muted-line">${parts.join(" · ")}</div>
                 </div>
@@ -882,6 +946,15 @@ if (configured) {
       editUnit = editUnit === btn.dataset.unit ? "" : btn.dataset.unit;
       els.editQtyUnits.innerHTML = unitChipsHTML(editUnit, "edit-qty-unit");
     }
+    else if (act === "edit-hist") openHistSheet(id);
+    else if (act === "hist-store") {
+      histStore = histStore === btn.dataset.store ? "" : btn.dataset.store;
+      renderHistStores();
+    }
+    else if (act === "hist-qty-unit") {
+      histUnit = histUnit === btn.dataset.unit ? "" : btn.dataset.unit;
+      els.histQtyUnits.innerHTML = unitChipsHTML(histUnit, "hist-qty-unit");
+    }
     else if (act === "toggle-new-store") {
       storesTouched = true;
       newStores.has(store) ? newStores.delete(store) : newStores.add(store);
@@ -963,6 +1036,13 @@ if (configured) {
   els.editCancel.addEventListener("click", closeEditSheet);
   els.editSheet.addEventListener("click", (e) => {
     if (e.target === els.editSheet) closeEditSheet();
+  });
+
+  // Editor zapisa povijesti
+  els.histSave.addEventListener("click", saveHist);
+  els.histCancel.addEventListener("click", closeHistSheet);
+  els.histSheet.addEventListener("click", (e) => {
+    if (e.target === els.histSheet) closeHistSheet();
   });
 
   els.micBtn.addEventListener("click", toggleVoice);
