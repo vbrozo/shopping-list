@@ -37,7 +37,7 @@ const els = {
   detailsToggle: $("details-toggle"),
   addDetails: $("add-details"),
   toast: $("toast"),
-  suggestions: $("suggestions"),
+  suggestList: $("suggest-list"),
   storePicker: $("store-picker"),
   inputSheet: $("input-sheet"),
   sheetTitle: $("sheet-title"),
@@ -98,6 +98,7 @@ let editingStoresFor = null;
 let groupByStore = localStorage.getItem("groupByStore") === "1";
 let userName = localStorage.getItem("userName") || "";
 let storesTouched = false; // je li korisnik ručno mijenjao dućane u formi
+let allNames = []; // svi poznati nazivi (za prijedloge pri tipkanju)
 const newStores = new Set();
 
 // ── Pomoćne ────────────────────────────────────────────────────
@@ -248,6 +249,32 @@ function renderStorePicker() {
   els.detailsToggle.textContent = sel.length ? `🏪 ${sel.join(", ")} ✓` : "🏪 Dućan i količina";
 }
 
+// Predloži uobičajeni dućan za upisani naziv (ako korisnik nije ručno birao)
+function applyAutoStore(name) {
+  if (storesTouched) return;
+  newStores.clear();
+  usualStoresFor(name).forEach((s) => newStores.add(s));
+  renderStorePicker();
+}
+
+// Vlastiti prijedlozi — pojave se tek od 2. znaka, ne otvaraju se na prazno polje
+function renderSuggestions(query) {
+  const q = query.trim().toLowerCase();
+  if (q.length < 2) { hideSuggestions(); return; }
+  const matches = allNames
+    .filter((n) => n.toLowerCase().includes(q) && n.toLowerCase() !== q)
+    .slice(0, 6);
+  if (!matches.length) { hideSuggestions(); return; }
+  els.suggestList.innerHTML = matches
+    .map((n) => `<li class="suggest-item" data-act="suggest" data-name="${esc(n)}">${esc(n)}</li>`)
+    .join("");
+  els.suggestList.classList.remove("hidden");
+}
+function hideSuggestions() {
+  els.suggestList.classList.add("hidden");
+  els.suggestList.innerHTML = "";
+}
+
 function renderList() {
   renderStorePicker();
   els.groupToggle.classList.toggle("active", groupByStore);
@@ -260,8 +287,7 @@ function renderList() {
   els.storeFilter.value = used.includes(prevFilter) ? prevFilter : "";
   filterStore = els.storeFilter.value;
 
-  const allNames = [...new Set([...items.map((i) => i.name), ...purchases.map((p) => p.name)])].sort();
-  els.suggestions.innerHTML = allNames.map((n) => `<option value="${esc(n)}">`).join("");
+  allNames = [...new Set([...items.map((i) => i.name), ...purchases.map((p) => p.name)])].sort();
 
   renderQuickAdd();
 
@@ -700,16 +726,17 @@ if (configured) {
     newStores.clear();
     storesTouched = false;
     renderStorePicker();
+    hideSuggestions();
     els.itemInput.focus();
   });
 
-  // Pri tipkanju poznatog artikla — predloži uobičajeni dućan
+  // Pri tipkanju: prijedlozi + automatski predloženi dućan
   els.itemInput.addEventListener("input", () => {
-    if (storesTouched) return;
-    const def = usualStoresFor(els.itemInput.value);
-    newStores.clear();
-    def.forEach((s) => newStores.add(s));
-    renderStorePicker();
+    applyAutoStore(els.itemInput.value);
+    renderSuggestions(els.itemInput.value);
+  });
+  els.itemInput.addEventListener("blur", () => {
+    setTimeout(hideSuggestions, 150); // odgoda da klik na prijedlog stigne
   });
 
   document.addEventListener("click", (e) => {
@@ -740,6 +767,12 @@ if (configured) {
     else if (act === "del") deleteItem(id);
     else if (act === "del-hist") deleteHistory(id);
     else if (act === "quick") quickAdd(btn.dataset.name, store);
+    else if (act === "suggest") {
+      els.itemInput.value = btn.dataset.name;
+      applyAutoStore(btn.dataset.name);
+      hideSuggestions();
+      els.itemInput.focus();
+    }
   });
 
   els.storeFilter.addEventListener("change", render);
