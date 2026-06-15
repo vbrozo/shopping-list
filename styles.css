@@ -48,6 +48,19 @@ body {
   margin: 0;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.header-left h1 {
+  font-size: 1.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -686,24 +699,25 @@ code {
 
 .hidden { display: none !important; }
 
-/* ── Tamni način (automatski po sistemu) ─────────────────────── */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #121212;
-    --card: #1e1e1e;
-    --text: #ececec;
-    --muted: #9a9a9a;
-    --border: #333333;
-    --green: #43a047;
-    --green-dark: #81c784;
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  }
-  .store-badge { background: #1b3a24; color: #a5d6a7; }
-  .price-badge { background: #3a2a12; color: #ffcc80; }
-  .qty-badge   { background: #2a2440; color: #b39ddb; }
-  .btn-save    { background: #1b3a24; }
-  .store-chip  { background: var(--card); color: var(--text); }
-  .notice      { background: #2b2410; border-color: #5a4a1a; }
-  code         { background: rgba(255, 255, 255, 0.1); }
-  .toast       { background: #2a2a2a; }
+/* ── Tamni način ──────────────────────────────────────────────
+   Aktivira ga JS klasom html.dark (ručni prekidač ILI praćenje
+   sustava dok korisnik ne odabere ručno). */
+html.dark {
+  --bg: #121212;
+  --card: #1e1e1e;
+  --text: #ececec;
+  --muted: #9a9a9a;
+  --border: #333333;
+  --green: #43a047;
+  --green-dark: #81c784;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
+html.dark .store-badge { background: #1b3a24; color: #a5d6a7; }
+html.dark .price-badge { background: #3a2a12; color: #ffcc80; }
+html.dark .qty-badge   { background: #2a2440; color: #b39ddb; }
+html.dark .btn-save    { background: #1b3a24; }
+html.dark .store-chip  { background: var(--card); color: var(--text); }
+html.dark .notice      { background: #2b2410; border-color: #5a4a1a; }
+html.dark code         { background: rgba(255, 255, 255, 0.1); }
+html.dark .toast       { background: #2a2a2a; }
+html.dark .item-inner  { background: var(--card); }

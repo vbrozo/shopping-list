@@ -26,6 +26,7 @@ const $ = (id) => document.getElementById(id);
 const els = {
   setupNotice: $("setup-notice"),
   appTitle: $("app-title"),
+  themeBtn: $("theme-btn"),
   nameBtn: $("name-btn"),
   viewToggle: $("view-toggle"),
   viewList: $("view-list"),
@@ -71,6 +72,26 @@ if (!configured) {
   els.setupNotice.classList.remove("hidden");
   els.viewList.classList.add("hidden");
 }
+
+// ── Tema (svijetlo / tamno) — radi i prije Firebasea ───────────
+const themeMedia = window.matchMedia("(prefers-color-scheme: dark)");
+function effectiveTheme() {
+  const stored = localStorage.getItem("theme");
+  return stored === "dark" || stored === "light" ? stored : (themeMedia.matches ? "dark" : "light");
+}
+function applyTheme() {
+  const dark = effectiveTheme() === "dark";
+  document.documentElement.classList.toggle("dark", dark);
+  els.themeBtn.textContent = dark ? "☀️" : "🌙";
+}
+els.themeBtn.addEventListener("click", () => {
+  localStorage.setItem("theme", effectiveTheme() === "dark" ? "light" : "dark");
+  applyTheme();
+});
+themeMedia.addEventListener("change", () => {
+  if (!localStorage.getItem("theme")) applyTheme(); // prati sustav dok nije ručno postavljeno
+});
+applyTheme();
 
 const app = configured ? initializeApp(cfg) : null;
 let db = null;
