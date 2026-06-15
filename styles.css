@@ -328,6 +328,38 @@ code {
 }
 .item.col { cursor: default; }
 
+/* Swipe-za-brisanje: pomični sadržaj + crveni "Obriši" sloj ispod */
+.item.swipeable {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+.item.swipeable .item-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--card);
+  position: relative;
+  z-index: 1;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.item-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: #e53935;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 18px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.item.will-delete .item-bg { background: #b71c1c; }
+
 .check {
   width: 26px;
   height: 26px;

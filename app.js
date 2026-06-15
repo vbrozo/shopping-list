@@ -357,16 +357,19 @@ function renderItem(item) {
   const who = item.added_by ? `<span class="who">👤 ${esc(item.added_by)}</span>` : "";
 
   return `
-    <li class="item ${item.bought ? "done" : ""}" data-act="toggle" data-id="${item.id}">
-      <button class="check" data-act="toggle" data-id="${item.id}" aria-label="Označi kupljeno">
-        ${item.bought ? "✓" : ""}
-      </button>
-      <div class="item-body">
-        <div class="item-name">${esc(item.name)} ${who}</div>
-        <div class="badges">${storeBadges}${editBtn}${qty}${price}</div>
-        ${editor}
+    <li class="item swipeable ${item.bought ? "done" : ""}" data-act="toggle" data-id="${item.id}">
+      <div class="item-bg"><span class="item-bg-icon">🗑️ Obriši</span></div>
+      <div class="item-inner">
+        <button class="check" data-act="toggle" data-id="${item.id}" aria-label="Označi kupljeno">
+          ${item.bought ? "✓" : ""}
+        </button>
+        <div class="item-body">
+          <div class="item-name">${esc(item.name)} ${who}</div>
+          <div class="badges">${storeBadges}${editBtn}${qty}${price}</div>
+          ${editor}
+        </div>
+        <button class="btn-del" data-act="del" data-id="${item.id}" aria-label="Obriši">×</button>
       </div>
-      <button class="btn-del" data-act="del" data-id="${item.id}" aria-label="Obriši">×</button>
     </li>`;
 }
 
@@ -680,10 +683,11 @@ let swipe = null;
 let suppressClickUntil = 0; // spriječi "tap = kupljeno" odmah nakon swipea
 function initSwipe() {
   document.addEventListener("touchstart", (e) => {
-    const li = e.target.closest(".item[data-id]");
+    const li = e.target.closest(".item.swipeable[data-id]");
     if (!li || !els.viewList.contains(li)) return;
     if (e.target.closest("button, input, select, .store-editor")) return;
-    swipe = { li, id: li.dataset.id, x: e.touches[0].clientX, y: e.touches[0].clientY, moved: false };
+    const inner = li.querySelector(".item-inner");
+    swipe = { li, inner, id: li.dataset.id, x: e.touches[0].clientX, y: e.touches[0].clientY, moved: false, dx: 0 };
   }, { passive: true });
 
   document.addEventListener("touchmove", (e) => {
@@ -692,23 +696,25 @@ function initSwipe() {
     const dy = e.touches[0].clientY - swipe.y;
     if (Math.abs(dx) > Math.abs(dy) && dx < 0) {
       swipe.moved = true;
-      swipe.li.style.transform = `translateX(${Math.max(dx, -120)}px)`;
-      swipe.li.style.opacity = String(1 + Math.max(dx, -120) / 240);
+      swipe.dx = Math.max(dx, -130);
+      swipe.inner.style.transition = "none";
+      swipe.inner.style.transform = `translateX(${swipe.dx}px)`;
+      swipe.li.classList.toggle("will-delete", swipe.dx <= -80);
     }
   }, { passive: true });
 
   document.addEventListener("touchend", () => {
     if (!swipe) return;
-    const li = swipe.li;
+    const { li, inner } = swipe;
     if (swipe.moved) suppressClickUntil = Date.now() + 450;
-    const dx = parseFloat((li.style.transform.match(/-?\d+/) || [0])[0]);
-    if (dx <= -80) {
-      li.style.transform = "translateX(-100%)";
-      li.style.opacity = "0";
+    inner.style.transition = "";
+    if (swipe.dx <= -80) {
+      inner.style.transform = "translateX(-100%)";
+      inner.style.opacity = "0";
       deleteItem(swipe.id);
     } else {
-      li.style.transform = "";
-      li.style.opacity = "";
+      inner.style.transform = "";
+      li.classList.remove("will-delete");
     }
     swipe = null;
   });
