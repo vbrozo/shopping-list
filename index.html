@@ -16,7 +16,7 @@
     })();
   </script>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="styles.css?v=13" />
+  <link rel="stylesheet" href="styles.css?v=14" />
 </head>
 <body>
   <header class="app-header">
@@ -58,7 +58,11 @@
         </div>
         <button type="button" id="details-toggle" class="details-toggle">🏪 Dućan i količina</button>
         <div id="add-details" class="add-details hidden">
-          <input id="qty-input" class="qty-input" type="text" placeholder="Količina (npr. 2 ili 1 kg)" autocomplete="off" />
+          <span class="picker-label">Količina:</span>
+          <div class="qty-row">
+            <select id="qty-value" class="qty-select"></select>
+            <div id="qty-units" class="qty-units"></div>
+          </div>
           <span class="picker-label">Dućan (može više):</span>
           <div id="store-picker" class="store-picker"></div>
         </div>
@@ -134,6 +138,22 @@
     </div>
   </div>
 
+  <!-- ══════════ BOTTOM-SHEET: količina ══════════ -->
+  <div id="qty-sheet" class="modal hidden">
+    <div class="modal-card">
+      <h2 id="qty-sheet-title">Količina</h2>
+      <div class="qty-row">
+        <select id="qty-sheet-value" class="qty-select"></select>
+        <div id="qty-sheet-units" class="qty-units"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="qty-sheet-clear" class="btn-text">Obriši</button>
+        <button id="qty-sheet-cancel" class="btn-text">Odustani</button>
+        <button id="qty-sheet-ok" class="btn-add">Spremi ✓</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══════════ BOTTOM-SHEET: brzi unos vrijednosti ══════════ -->
   <div id="input-sheet" class="modal hidden">
     <div class="modal-card">
@@ -146,7 +166,7 @@
     </div>
   </div>
 
-  <script src="config.js?v=13"></script>
-  <script type="module" src="app.js?v=13"></script>
+  <script src="config.js?v=14"></script>
+  <script type="module" src="app.js?v=14"></script>
 </body>
 </html>

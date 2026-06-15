@@ -18,6 +18,11 @@ import {
 // ── Fiksna lista dućana ────────────────────────────────────────
 const STORES = ["Konzum", "DM", "Lidl", "Tvornica Zdrave Hrane"];
 
+// ── Količina: vrijednosti i jedinice ───────────────────────────
+const QTY_VALUES = ["", "0.5", "1", "1.5", "2", "2.5", "3", "4", "5", "6", "7", "8", "9", "10"];
+const QTY_UNITS = ["kom", "kg", "l"];
+let addUnit = "kom"; // odabrana jedinica u formi za dodavanje
+
 // ── Konfiguracija / inicijalizacija ────────────────────────────
 const cfg = (window.APP_CONFIG && window.APP_CONFIG.firebaseConfig) || {};
 const configured = cfg.apiKey && cfg.projectId;
@@ -33,7 +38,15 @@ const els = {
   viewHistory: $("view-history"),
   form: $("add-form"),
   itemInput: $("item-input"),
-  qtyInput: $("qty-input"),
+  qtyValue: $("qty-value"),
+  qtyUnits: $("qty-units"),
+  qtySheet: $("qty-sheet"),
+  qtySheetTitle: $("qty-sheet-title"),
+  qtySheetValue: $("qty-sheet-value"),
+  qtySheetUnits: $("qty-sheet-units"),
+  qtySheetOk: $("qty-sheet-ok"),
+  qtySheetCancel: $("qty-sheet-cancel"),
+  qtySheetClear: $("qty-sheet-clear"),
   micBtn: $("mic-btn"),
   detailsToggle: $("details-toggle"),
   addDetails: $("add-details"),
@@ -247,6 +260,61 @@ function closeSheet(val) {
   els.inputSheet.classList.add("hidden");
   const r = sheetResolve;
   sheetResolve = null;
+  if (r) r(val);
+}
+
+// ── Kontrola količine (dropdown vrijednosti + jedinice kom/kg/l) ─
+function qtyOptionsHTML(sel) {
+  const vals = (!sel || QTY_VALUES.includes(sel)) ? QTY_VALUES : [...QTY_VALUES, sel];
+  return vals
+    .map((v) => `<option value="${esc(v)}" ${v === sel ? "selected" : ""}>${v === "" ? "–" : esc(v)}</option>`)
+    .join("");
+}
+function unitChipsHTML(selected, act) {
+  return QTY_UNITS
+    .map((u) => `<button type="button" class="unit-chip ${u === selected ? "selected" : ""}" data-act="${act}" data-unit="${esc(u)}">${esc(u)}</button>`)
+    .join("");
+}
+function buildQty(value, unit) {
+  const v = (value || "").trim();
+  if (!v) return null;
+  return unit ? `${v} ${unit}` : v;
+}
+function parseQty(s) {
+  s = (s || "").trim();
+  if (!s) return { value: "", unit: "kom" };
+  const m = s.match(/^([\d.,]+)\s*(.*)$/);
+  let value = m ? m[1].replace(",", ".") : "";
+  let unit = m ? m[2].trim() : "";
+  if (!QTY_UNITS.includes(unit)) unit = "";
+  return { value, unit };
+}
+function initAddQty() {
+  els.qtyValue.innerHTML = qtyOptionsHTML("");
+  renderAddUnits();
+}
+function renderAddUnits() {
+  els.qtyUnits.innerHTML = unitChipsHTML(addUnit, "qty-unit");
+}
+
+// Bottom-sheet za uređivanje količine
+let qtySheetResolve = null;
+let qtySheetUnit = "kom";
+function askQty(title, current) {
+  return new Promise((resolve) => {
+    qtySheetResolve = resolve;
+    const { value, unit } = parseQty(current);
+    qtySheetUnit = unit;
+    els.qtySheetTitle.textContent = title;
+    els.qtySheetValue.innerHTML = qtyOptionsHTML(value);
+    els.qtySheetUnits.innerHTML = unitChipsHTML(qtySheetUnit, "qty-sheet-unit");
+    els.qtySheet.classList.remove("hidden");
+  });
+}
+function closeQtySheet(val) {
+  els.qtySheet.classList.add("hidden");
+  const r = qtySheetResolve;
+  qtySheetResolve = null;
   if (r) r(val);
 }
 
@@ -534,10 +602,10 @@ async function toggleItemStore(id, store) {
 async function editQty(id) {
   const item = items.find((i) => i.id === id);
   if (!item) return;
-  const value = await askSheet(`Količina — ${item.name}`, item.qty || "", "npr. 2 ili 1 kg");
-  if (value === null) return;
+  const result = await askQty(`Količina — ${item.name}`, item.qty || "");
+  if (result === null) return; // odustao
   try {
-    await updateDoc(doc(db, "items", id), { qty: value.trim() || null });
+    await updateDoc(doc(db, "items", id), { qty: result || null });
   } catch (e) { console.error(e); setSync(false); }
 }
 
@@ -747,9 +815,11 @@ if (configured) {
     e.preventDefault();
     const name = els.itemInput.value.trim();
     if (!name) return;
-    addItem(name, sortStores([...newStores]), els.qtyInput.value.trim());
+    addItem(name, sortStores([...newStores]), buildQty(els.qtyValue.value, addUnit));
     els.itemInput.value = "";
-    els.qtyInput.value = "";
+    els.qtyValue.value = "";
+    addUnit = "kom";
+    renderAddUnits();
     newStores.clear();
     storesTouched = false;
     renderStorePicker();
@@ -788,6 +858,14 @@ if (configured) {
       const was = btn.classList.contains("selected");
       row.querySelectorAll(".store-chip").forEach((c) => c.classList.remove("selected"));
       if (!was) btn.classList.add("selected");
+    }
+    else if (act === "qty-unit") {
+      addUnit = addUnit === btn.dataset.unit ? "" : btn.dataset.unit;
+      renderAddUnits();
+    }
+    else if (act === "qty-sheet-unit") {
+      qtySheetUnit = qtySheetUnit === btn.dataset.unit ? "" : btn.dataset.unit;
+      els.qtySheetUnits.innerHTML = unitChipsHTML(qtySheetUnit, "qty-sheet-unit");
     }
     else if (act === "qty") editQty(id);
     else if (act === "price") editPrice(id);
@@ -843,7 +921,19 @@ if (configured) {
     if (e.target === els.inputSheet) closeSheet(null);
   });
 
+  // Bottom-sheet za količinu
+  els.qtySheetOk.addEventListener("click", () => {
+    const built = buildQty(els.qtySheetValue.value, qtySheetUnit);
+    closeQtySheet(built === null ? "" : built);
+  });
+  els.qtySheetClear.addEventListener("click", () => closeQtySheet(""));
+  els.qtySheetCancel.addEventListener("click", () => closeQtySheet(null));
+  els.qtySheet.addEventListener("click", (e) => {
+    if (e.target === els.qtySheet) closeQtySheet(null);
+  });
+
   els.micBtn.addEventListener("click", toggleVoice);
+  initAddQty();
   initVoice();
   initSwipe();
 
