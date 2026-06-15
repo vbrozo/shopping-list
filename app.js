@@ -139,6 +139,49 @@ function usualStoresFor(name) {
   return best ? [best[0]] : [];
 }
 
+// Skini hrvatske dijakritike za usporedbu (č→c, ž→z, đ→d…)
+function deaccent(s) {
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\u0111/g, "d");
+}
+// Prepoznavanje dućana u izgovorenom tekstu
+const VOICE_PREP = new Set(["iz", "u", "kod", "na", "sa", "s", "od"]);
+const VOICE_SINGLE_STORE = [["Konzum", "konzum"], ["Lidl", "lidl"], ["DM", "dm"]];
+const VOICE_TZH_WORDS = new Set([
+  "tvornica", "tvornice", "tvornici", "tvornicu",
+  "zdrave", "zdrava", "zdravu", "zdravi",
+  "hrane", "hranu", "hrana", "tzh",
+]);
+
+// Iz fraze ("mlijeko iz konzuma") izvuci naziv i dućan(e)
+function extractStores(phrase) {
+  const words = phrase.split(/\s+/).filter(Boolean);
+  const norm = words.map(deaccent);
+  const remove = new Set();
+  const stores = [];
+
+  // Tvornica Zdrave Hrane (više riječi)
+  const tzh = norm.map((w, i) => (VOICE_TZH_WORDS.has(w) ? i : -1)).filter((i) => i >= 0);
+  if (tzh.length) {
+    stores.push("Tvornica Zdrave Hrane");
+    tzh.forEach((i) => remove.add(i));
+    if (tzh[0] > 0 && VOICE_PREP.has(norm[tzh[0] - 1])) remove.add(tzh[0] - 1);
+  }
+  // Konzum / Lidl / DM (jednorječni, uz padeže: konzuma, lidlu…)
+  for (const [store, stem] of VOICE_SINGLE_STORE) {
+    for (let i = 0; i < norm.length; i++) {
+      if (remove.has(i)) continue;
+      if (norm[i].startsWith(stem) && norm[i].length <= stem.length + 3) {
+        stores.push(store);
+        remove.add(i);
+        if (i > 0 && VOICE_PREP.has(norm[i - 1])) remove.add(i - 1);
+        break;
+      }
+    }
+  }
+  const name = words.filter((_, i) => !remove.has(i)).join(" ").trim();
+  return { name, stores: [...new Set(stores)] };
+}
+
 // ── Toast (s opcionalnom akcijom, npr. Poništi) ────────────────
 let toastTimer = null;
 function toast(msg, actionLabel, actionFn) {
@@ -562,9 +605,19 @@ function processVoice(text) {
   let t = text.trim().replace(/[.!?]+$/, "").replace(VOICE_CMD, "");
   const parts = t.split(/\s*,\s*|\s+i\s+|\s+pa\s+|\s+te\s+/i).map((s) => s.trim()).filter(Boolean);
   if (parts.length === 0) return;
-  const stores = sortStores([...newStores]);
-  parts.forEach((name) => addItem(name, stores, null));
-  toast(`Dodano: ${parts.join(", ")} ✓`);
+
+  const picked = sortStores([...newStores]); // ručno odabrani dućani u formi
+  const added = [];
+  for (let part of parts) {
+    part = part.replace(VOICE_CMD, "").trim(); // npr. "dodaj kruh i dodaj mlijeko"
+    if (!part) continue;
+    const { name, stores } = extractStores(part);
+    if (!name) continue;
+    const finalStores = stores.length ? stores : picked;
+    addItem(name, finalStores, null);
+    added.push(name + (stores.length ? ` → ${stores.join(", ")}` : ""));
+  }
+  if (added.length) toast(`Dodano: ${added.join(" · ")} ✓`);
 }
 
 // ── Swipe za brisanje (lijevo) ─────────────────────────────────

@@ -12,7 +12,7 @@ a hosta se besplatno na GitHub Pages.
 - 🏪 Odabir dućana iz fiksne liste (Konzum, DM, Lidl, Tvornica Zdrave Hrane), može više po stavci + filtriranje
 - 📑 Grupiranje liste po dućanu (dok kupuješ vidiš stavke skupljene po dućanu)
 - 💡 Prijedlozi (autocomplete) + automatski predloženi dućan po artiklu (iz povijesti)
-- 🎤 Glasovni unos — npr. „Dodaj kruh i mlijeko" (Web Speech API, hr-HR; Chrome/Safari)
+- 🎤 Glasovni unos — npr. „Dodaj kruh i mlijeko"; prepoznaje i dućan, npr. „mlijeko iz Konzuma" → stavka „mlijeko" + dućan „Konzum" (Web Speech API, hr-HR; Chrome/Safari)
 - 👈 Povuci stavku ulijevo za brisanje + „Poništi"
 - 👤 Oznaka tko je dodao / kupio (ime se postavlja gumbom u zaglavlju)
 - 🔄 Sinkronizacija uživo između telefona
