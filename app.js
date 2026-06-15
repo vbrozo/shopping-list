@@ -15,6 +15,9 @@ import {
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+// ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
+const APP_VERSION = "15";
+
 // ── Fiksna lista dućana ────────────────────────────────────────
 const STORES = ["Konzum", "DM", "Lidl", "Tvornica Zdrave Hrane"];
 
@@ -32,6 +35,8 @@ const els = {
   setupNotice: $("setup-notice"),
   appTitle: $("app-title"),
   themeBtn: $("theme-btn"),
+  refreshBtn: $("refresh-btn"),
+  appVer: $("app-ver"),
   nameBtn: $("name-btn"),
   viewToggle: $("view-toggle"),
   viewList: $("view-list"),
@@ -105,6 +110,24 @@ themeMedia.addEventListener("change", () => {
   if (!localStorage.getItem("theme")) applyTheme(); // prati sustav dok nije ručno postavljeno
 });
 applyTheme();
+
+// ── Tvrdo osvježi (za fazu testiranja): odjavi SW, očisti cache, reload ─
+els.appVer.textContent = "v" + APP_VERSION;
+els.refreshBtn.addEventListener("click", async () => {
+  els.refreshBtn.textContent = "Osvježavam…";
+  els.refreshBtn.disabled = true;
+  try {
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister()));
+    }
+    if (window.caches) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+  } catch (e) { console.warn("Hard refresh:", e); }
+  location.reload();
+});
 
 const app = configured ? initializeApp(cfg) : null;
 let db = null;

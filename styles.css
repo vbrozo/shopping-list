@@ -733,6 +733,31 @@ code {
 /* toast je pointer-events:none; gumb mora biti klikabilan, ali samo dok je prikazan */
 .toast.show .toast-action { pointer-events: auto; }
 
+/* Footer s tvrdim osvježavanjem + verzijom */
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 28px;
+  padding: 12px 0;
+}
+.btn-refresh {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.btn-refresh:active { background: var(--border); }
+.btn-refresh:disabled { opacity: 0.6; }
+.app-footer .ver {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
 .hidden { display: none !important; }
 
 /* ── Tamni način ──────────────────────────────────────────────
