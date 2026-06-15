@@ -4,14 +4,24 @@ Jednostavna web aplikacija (mobile-first) za zajedničku listu za kupovinu.
 Lista se sinkronizira uživo između uređaja preko [Firebase Firestore](https://firebase.google.com),
 a hosta se besplatno na GitHub Pages.
 
-## Funkcionalnosti (faza 1)
+## Funkcionalnosti
 
+**Lista (faza 1)**
 - ➕ Dodavanje stavki
 - ✅ Označavanje kao kupljeno
 - 🏪 Dodavanje dućana na svaku stavku + filtriranje po dućanu
 - 💡 Prijedlozi (autocomplete) na temelju prijašnjih unosa
 - 🔄 Sinkronizacija uživo između telefona
 - 📱 Može se "instalirati" na početni ekran (PWA)
+
+**Povijest i cijene (faza 2)**
+- 💰 Upis cijene na kupljenu stavku
+- 📦 „Spremi u povijest" — arhivira kupljene stavke (datum, dućan, cijena)
+- 📊 Pregled cijena po artiklu (najjeftiniji dućan + zadnja cijena)
+- 📅 Kronološka povijest kupovina s pretragom
+- ⚡ Brzi unos — najčešći artikli iz povijesti dodaju se jednim dodirom (s prošlim dućanom)
+
+Prikaz se prebacuje između **Liste** 🛒 i **Povijesti** 📜 dugmetom u zaglavlju.
 
 ## Postavljanje (jednokratno, ~5 min)
 
@@ -65,9 +75,9 @@ python3 -m http.server 8000
 # pa otvori http://localhost:8000
 ```
 
-## Plan — faza 2
+## Plan — faza 3 (ideje)
 
-- 📅 Povijest kupovine: datum, dućan, cijena (kolekcija `purchases`)
-- 💡 Pametniji prijedlozi na temelju povijesti
-- 📊 Pregled cijena po dućanima
-- 🔐 Zaštita prijavom (Firebase Auth)
+- 🔐 Zaštita prijavom (Firebase Auth) — privatna lista
+- 📈 Grafovi kretanja cijena kroz vrijeme
+- 🧾 Grupiranje povijesti po „kupovini" (jedan odlazak u dućan)
+- 📤 Izvoz povijesti (CSV)

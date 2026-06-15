@@ -10,8 +10,11 @@
 </head>
 <body>
   <header class="app-header">
-    <h1>🛒 Lista za kupovinu</h1>
-    <span id="sync-dot" class="sync-dot" title="Status veze"></span>
+    <h1 id="app-title">🛒 Lista za kupovinu</h1>
+    <div class="header-actions">
+      <button id="view-toggle" class="btn-icon" aria-label="Povijest">📜</button>
+      <span id="sync-dot" class="sync-dot" title="Status veze"></span>
+    </div>
   </header>
 
   <main class="container">
@@ -22,49 +25,80 @@
          Upute se nalaze u <code>README.md</code>.</p>
     </div>
 
-    <!-- Forma za dodavanje -->
-    <form id="add-form" class="add-form">
-      <input
-        id="item-input"
-        type="text"
-        placeholder="Dodaj stavku (npr. mlijeko)"
-        autocomplete="off"
-        list="suggestions"
-        required />
-      <datalist id="suggestions"></datalist>
-      <input
-        id="store-input"
-        type="text"
-        placeholder="Dućan (nije obavezno)"
-        autocomplete="off"
-        list="store-suggestions" />
-      <datalist id="store-suggestions"></datalist>
-      <button type="submit" class="btn-add" aria-label="Dodaj">➕ Dodaj</button>
-    </form>
+    <!-- ══════════ PRIKAZ: LISTA ══════════ -->
+    <div id="view-list">
+      <!-- Forma za dodavanje -->
+      <form id="add-form" class="add-form">
+        <input
+          id="item-input"
+          type="text"
+          placeholder="Dodaj stavku (npr. mlijeko)"
+          autocomplete="off"
+          list="suggestions"
+          required />
+        <datalist id="suggestions"></datalist>
+        <input
+          id="store-input"
+          type="text"
+          placeholder="Dućan (nije obavezno)"
+          autocomplete="off"
+          list="store-suggestions" />
+        <datalist id="store-suggestions"></datalist>
+        <button type="submit" class="btn-add" aria-label="Dodaj">➕ Dodaj</button>
+      </form>
 
-    <!-- Filter po dućanu -->
-    <div class="toolbar">
-      <label for="store-filter">Dućan:</label>
-      <select id="store-filter">
-        <option value="">Svi</option>
-      </select>
+      <!-- Brzi unos na temelju prijašnjih kupovina -->
+      <section id="quick-add-section" class="hidden">
+        <h2 class="section-title">Brzi unos 💡</h2>
+        <div id="quick-add" class="chips"></div>
+      </section>
+
+      <!-- Filter po dućanu -->
+      <div class="toolbar">
+        <label for="store-filter">Dućan:</label>
+        <select id="store-filter">
+          <option value="">Svi</option>
+        </select>
+      </div>
+
+      <!-- Aktivne stavke -->
+      <section>
+        <h2 class="section-title">Za kupiti <span id="active-count" class="count">0</span></h2>
+        <ul id="active-list" class="list"></ul>
+        <p id="empty-active" class="empty hidden">Lista je prazna. Dodaj prvu stavku! 🎉</p>
+      </section>
+
+      <!-- Kupljene stavke -->
+      <section id="bought-section" class="hidden">
+        <div class="section-header">
+          <h2 class="section-title">Kupljeno <span id="bought-count" class="count">0</span></h2>
+          <button id="clear-bought" class="btn-text">Spremi u povijest ✓</button>
+        </div>
+        <p class="hint">Dodirni 💰 da upišeš cijenu. „Spremi u povijest" arhivira kupljeno (s datumom/dućanom/cijenom).</p>
+        <ul id="bought-list" class="list bought"></ul>
+      </section>
     </div>
 
-    <!-- Aktivne stavke -->
-    <section>
-      <h2 class="section-title">Za kupiti <span id="active-count" class="count">0</span></h2>
-      <ul id="active-list" class="list"></ul>
-      <p id="empty-active" class="empty hidden">Lista je prazna. Dodaj prvu stavku! 🎉</p>
-    </section>
-
-    <!-- Kupljene stavke -->
-    <section id="bought-section" class="hidden">
-      <div class="section-header">
-        <h2 class="section-title">Kupljeno <span id="bought-count" class="count">0</span></h2>
-        <button id="clear-bought" class="btn-text">Očisti kupljeno</button>
+    <!-- ══════════ PRIKAZ: POVIJEST ══════════ -->
+    <div id="view-history" class="hidden">
+      <div class="toolbar">
+        <label for="history-search">Traži:</label>
+        <input id="history-search" type="text" placeholder="ime artikla…" autocomplete="off" />
       </div>
-      <ul id="bought-list" class="list bought"></ul>
-    </section>
+
+      <!-- Pregled cijena po artiklu -->
+      <section>
+        <h2 class="section-title">Cijene po artiklu 📊</h2>
+        <ul id="price-list" class="list"></ul>
+        <p id="empty-history" class="empty hidden">Još nema spremljenih kupovina.</p>
+      </section>
+
+      <!-- Kronološka povijest -->
+      <section id="timeline-section" class="hidden">
+        <h2 class="section-title">Povijest kupovina 📅</h2>
+        <ul id="history-list" class="list"></ul>
+      </section>
+    </div>
   </main>
 
   <script src="config.js"></script>

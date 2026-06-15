@@ -48,6 +48,25 @@ body {
   margin: 0;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.btn-icon {
+  background: rgba(255, 255, 255, 0.18);
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.btn-icon:active { background: rgba(255, 255, 255, 0.35); }
+
 .sync-dot {
   width: 12px;
   height: 12px;
@@ -207,23 +226,83 @@ code {
   text-decoration: line-through;
   color: var(--muted);
 }
-.store-badge {
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.store-badge, .price-badge {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  margin-top: 3px;
   font-size: 0.8rem;
-  color: var(--green-dark);
-  background: #e8f5e9;
   border: none;
   border-radius: 999px;
   padding: 2px 8px;
   cursor: pointer;
 }
-.store-badge.empty {
+.store-badge {
+  color: var(--green-dark);
+  background: #e8f5e9;
+}
+.price-badge {
+  color: #e65100;
+  background: #fff3e0;
+}
+.store-badge.empty, .price-badge.empty {
   color: var(--muted);
   background: transparent;
   border: 1px dashed var(--border);
+}
+
+.muted-line {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+/* Brzi unos — chips */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.chip {
+  background: var(--card);
+  border: 1px solid var(--green);
+  color: var(--green-dark);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.chip:active { background: #e8f5e9; }
+.chip-store {
+  font-size: 0.72rem;
+  color: var(--muted);
+  background: var(--bg);
+  border-radius: 999px;
+  padding: 1px 6px;
+}
+
+.hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.toolbar input[type="text"] {
+  flex: 1;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 0.9rem;
 }
 
 .btn-del {
