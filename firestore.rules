@@ -1,0 +1,26 @@
+// ════════════════════════════════════════════════════════════════
+//  Lista za kupovinu — Firestore Security Rules
+//  Postavi u Firebase konzoli: Firestore Database → Rules → Publish
+// ════════════════════════════════════════════════════════════════
+//
+//  NAPOMENA o privatnosti: ova pravila dopuštaju pristup svima koji
+//  imaju link aplikacije. Za privatnu listu para to je u praksi
+//  dovoljno (link je nepoznat), a kasnije se može dodati prijava
+//  (Firebase Auth) pa zaključati pristup. Vidi README → "Privatnost".
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Trenutna lista za kupovinu
+    match /items/{itemId} {
+      allow read, write: if true;
+    }
+
+    // Povijest kupovine (FAZA 2 — datum/dućan/cijena)
+    match /purchases/{purchaseId} {
+      allow read, write: if true;
+    }
+  }
+}

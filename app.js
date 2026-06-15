@@ -1,8 +1,23 @@
 "use strict";
 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+  getDocs,
+  writeBatch,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
 // ── Konfiguracija / inicijalizacija ────────────────────────────
-const cfg = window.APP_CONFIG || {};
-const configured = cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY;
+const cfg = (window.APP_CONFIG && window.APP_CONFIG.firebaseConfig) || {};
+const configured = cfg.apiKey && cfg.projectId;
 
 const $ = (id) => document.getElementById(id);
 
@@ -29,31 +44,15 @@ if (!configured) {
   els.form.classList.add("hidden");
 }
 
-const sb = configured
-  ? supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY)
-  : null;
+const app = configured ? initializeApp(cfg) : null;
+const db = configured ? getFirestore(app) : null;
+const itemsCol = db ? collection(db, "items") : null;
 
-// Lokalna kopija stavki (sinkronizirana s bazom)
+// Lokalna kopija stavki (sinkronizirana s bazom preko onSnapshot)
 let items = [];
 let filterStore = "";
 
-// ── Dohvat i prikaz ────────────────────────────────────────────
-async function loadItems() {
-  const { data, error } = await sb
-    .from("items")
-    .select("*")
-    .order("created_at", { ascending: true });
-
-  if (error) {
-    console.error(error);
-    setSync(false);
-    return;
-  }
-  items = data || [];
-  setSync(true);
-  render();
-}
-
+// ── Prikaz ─────────────────────────────────────────────────────
 function render() {
   // Popuni filter dućana
   const stores = [...new Set(items.map((i) => i.store).filter(Boolean))].sort();
@@ -111,63 +110,68 @@ function setSync(ok) {
 
 // ── Akcije ─────────────────────────────────────────────────────
 async function addItem(name, store) {
-  const optimistic = {
-    id: "tmp-" + Date.now(),
-    name,
-    store: store || null,
-    bought: false,
-    created_at: new Date().toISOString(),
-  };
-  items.push(optimistic);
-  render();
-
-  const { error } = await sb.from("items").insert({ name, store: store || null });
-  if (error) {
-    console.error(error);
+  try {
+    await addDoc(itemsCol, {
+      name,
+      store: store || null,
+      bought: false,
+      bought_at: null,
+      created_at: Date.now(),
+    });
+  } catch (e) {
+    console.error(e);
     setSync(false);
   }
-  // realtime / reload donosi pravi redak
 }
 
 async function toggleBought(id) {
-  const item = items.find((i) => String(i.id) === String(id));
+  const item = items.find((i) => i.id === id);
   if (!item) return;
   const next = !item.bought;
-  item.bought = next;
-  render();
-  const { error } = await sb
-    .from("items")
-    .update({ bought: next, bought_at: next ? new Date().toISOString() : null })
-    .eq("id", id);
-  if (error) { console.error(error); setSync(false); }
+  try {
+    await updateDoc(doc(db, "items", id), {
+      bought: next,
+      bought_at: next ? Date.now() : null,
+    });
+  } catch (e) {
+    console.error(e);
+    setSync(false);
+  }
 }
 
 async function editStore(id) {
-  const item = items.find((i) => String(i.id) === String(id));
+  const item = items.find((i) => i.id === id);
   if (!item) return;
   const value = prompt("U kojem dućanu se kupuje?", item.store || "");
   if (value === null) return; // odustao
-  const store = value.trim() || null;
-  item.store = store;
-  render();
-  const { error } = await sb.from("items").update({ store }).eq("id", id);
-  if (error) { console.error(error); setSync(false); }
+  try {
+    await updateDoc(doc(db, "items", id), { store: value.trim() || null });
+  } catch (e) {
+    console.error(e);
+    setSync(false);
+  }
 }
 
 async function deleteItem(id) {
-  items = items.filter((i) => String(i.id) !== String(id));
-  render();
-  const { error } = await sb.from("items").delete().eq("id", id);
-  if (error) { console.error(error); setSync(false); }
+  try {
+    await deleteDoc(doc(db, "items", id));
+  } catch (e) {
+    console.error(e);
+    setSync(false);
+  }
 }
 
 async function clearBought() {
   if (!confirm("Obrisati sve kupljene stavke?")) return;
-  const ids = items.filter((i) => i.bought).map((i) => i.id);
-  items = items.filter((i) => !i.bought);
-  render();
-  const { error } = await sb.from("items").delete().in("id", ids);
-  if (error) { console.error(error); setSync(false); }
+  try {
+    const snap = await getDocs(query(itemsCol, where("bought", "==", true)));
+    const batch = writeBatch(db);
+    snap.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  } catch (e) {
+    console.error(e);
+    setSync(false);
+  }
 }
 
 // ── Event listeneri ────────────────────────────────────────────
@@ -196,14 +200,17 @@ if (configured) {
   els.clearBought.addEventListener("click", clearBought);
 
   // Sinkronizacija uživo između uređaja
-  sb.channel("items-changes")
-    .on("postgres_changes", { event: "*", schema: "public", table: "items" }, loadItems)
-    .subscribe();
-
-  // Osvježi pri povratku u aplikaciju
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) loadItems();
-  });
-
-  loadItems();
+  onSnapshot(
+    itemsCol,
+    (snap) => {
+      items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      items.sort((a, b) => (a.created_at || 0) - (b.created_at || 0));
+      setSync(true);
+      render();
+    },
+    (err) => {
+      console.error(err);
+      setSync(false);
+    }
+  );
 }

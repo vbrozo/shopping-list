@@ -15,10 +15,10 @@
   </header>
 
   <main class="container">
-    <!-- Poruka ako Supabase nije postavljen -->
+    <!-- Poruka ako Firebase nije postavljen -->
     <div id="setup-notice" class="notice hidden">
       <h2>⚙️ Potrebno je postaviti bazu</h2>
-      <p>Otvori datoteku <code>config.js</code> i upiši svoj <strong>Supabase URL</strong> i <strong>anon ključ</strong>.
+      <p>Otvori datoteku <code>config.js</code> i upiši svoju <strong>Firebase konfiguraciju</strong>.
          Upute se nalaze u <code>README.md</code>.</p>
     </div>
 
@@ -67,8 +67,7 @@
     </section>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
