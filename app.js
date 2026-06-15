@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "22";
+const APP_VERSION = "23";
 
 // ── Monokromatske ikone (currentColor — prate temu) ────────────
 const ICONS = {
