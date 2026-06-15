@@ -170,6 +170,43 @@ code {
   background: var(--card);
   font-size: 0.9rem;
 }
+.btn-toggle {
+  margin-left: auto;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.btn-toggle.active {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+.qty-input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  flex: 1 1 100%;
+}
+.qty-input:focus { outline: none; border-color: var(--green); }
+
+/* Grupiranje po dućanu */
+.group-head {
+  list-style: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--green-dark);
+  padding: 10px 4px 2px;
+}
 
 .section-title {
   font-size: 1rem;
@@ -219,6 +256,7 @@ code {
   border-radius: var(--radius);
   padding: 12px 14px;
   box-shadow: var(--shadow);
+  transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
 .check {
@@ -275,11 +313,50 @@ code {
   color: #e65100;
   background: #fff3e0;
 }
-.store-badge.empty, .price-badge.empty {
+.qty-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  border: none;
+  border-radius: 999px;
+  padding: 2px 8px;
+  cursor: pointer;
+  color: #4527a0;
+  background: #ede7f6;
+}
+.store-badge.empty, .price-badge.empty, .qty-badge.empty {
   color: var(--muted);
   background: transparent;
   border: 1px dashed var(--border);
 }
+
+.who {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* Tablica cijena po dućanu (povijest) */
+.item.col { display: block; }
+.price-table {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--muted);
+  padding: 2px 0;
+}
+.price-row.cheapest {
+  color: var(--green-dark);
+  font-weight: 600;
+}
+.price-row small { font-weight: 400; opacity: 0.8; }
 
 .muted-line {
   font-size: 0.82rem;
@@ -484,6 +561,20 @@ code {
 .toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.toast-action {
+  background: none;
+  border: none;
+  color: #8bc34a;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 2px 4px;
 }
 
 .hidden { display: none !important; }

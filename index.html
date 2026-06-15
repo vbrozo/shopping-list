@@ -12,6 +12,7 @@
   <header class="app-header">
     <h1 id="app-title">🛒 Lista za kupovinu</h1>
     <div class="header-actions">
+      <button id="name-btn" class="btn-icon" aria-label="Tvoje ime">👤</button>
       <button id="view-toggle" class="btn-icon" aria-label="Povijest">📜</button>
       <span id="sync-dot" class="sync-dot" title="Status veze"></span>
     </div>
@@ -40,6 +41,7 @@
           <button type="button" id="mic-btn" class="btn-mic" aria-label="Glasovni unos">🎤</button>
         </div>
         <datalist id="suggestions"></datalist>
+        <input id="qty-input" class="qty-input" type="text" placeholder="Količina (npr. 2 ili 1 kg) — nije obavezno" autocomplete="off" />
         <div class="store-picker-wrap">
           <span class="picker-label">Dućan (može više):</span>
           <div id="store-picker" class="store-picker"></div>
@@ -53,12 +55,13 @@
         <div id="quick-add" class="chips"></div>
       </section>
 
-      <!-- Filter po dućanu -->
+      <!-- Filter po dućanu + grupiranje -->
       <div class="toolbar">
         <label for="store-filter">Dućan:</label>
         <select id="store-filter">
           <option value="">Svi</option>
         </select>
+        <button id="group-toggle" class="btn-toggle" type="button">📑 Grupiraj</button>
       </div>
 
       <!-- Aktivne stavke -->
@@ -117,7 +120,7 @@
     </div>
   </div>
 
-  <script src="config.js?v=5"></script>
-  <script type="module" src="app.js?v=5"></script>
+  <script src="config.js?v=6"></script>
+  <script type="module" src="app.js?v=6"></script>
 </body>
 </html>

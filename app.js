@@ -3,15 +3,15 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   collection,
   onSnapshot,
   addDoc,
   updateDoc,
   deleteDoc,
   doc,
-  query,
-  where,
-  getDocs,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -23,20 +23,22 @@ const cfg = (window.APP_CONFIG && window.APP_CONFIG.firebaseConfig) || {};
 const configured = cfg.apiKey && cfg.projectId;
 
 const $ = (id) => document.getElementById(id);
-
 const els = {
   setupNotice: $("setup-notice"),
   appTitle: $("app-title"),
+  nameBtn: $("name-btn"),
   viewToggle: $("view-toggle"),
   viewList: $("view-list"),
   viewHistory: $("view-history"),
   form: $("add-form"),
   itemInput: $("item-input"),
+  qtyInput: $("qty-input"),
   micBtn: $("mic-btn"),
   toast: $("toast"),
   suggestions: $("suggestions"),
   storePicker: $("store-picker"),
   storeFilter: $("store-filter"),
+  groupToggle: $("group-toggle"),
   quickAddSection: $("quick-add-section"),
   quickAdd: $("quick-add"),
   activeList: $("active-list"),
@@ -64,18 +66,32 @@ if (!configured) {
 }
 
 const app = configured ? initializeApp(cfg) : null;
-const db = configured ? getFirestore(app) : null;
+let db = null;
+if (configured) {
+  // Offline trajni cache (radi i bez interneta, sinkronizira po povratku)
+  try {
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    });
+  } catch (e) {
+    console.warn("Offline cache nedostupan, koristim standardni:", e);
+    db = getFirestore(app);
+  }
+}
 const itemsCol = db ? collection(db, "items") : null;
 const purchasesCol = db ? collection(db, "purchases") : null;
 
-// Lokalne kopije (sinkronizirane preko onSnapshot)
+// ── Stanje ─────────────────────────────────────────────────────
 let items = [];
 let purchases = [];
 let filterStore = "";
-let view = "list"; // "list" | "history"
+let view = "list";
 let historyQuery = "";
-let editingStoresFor = null; // id stavke čiji se dućani trenutno uređuju
-const newStores = new Set(); // odabrani dućani u formi za dodavanje
+let editingStoresFor = null;
+let groupByStore = localStorage.getItem("groupByStore") === "1";
+let userName = localStorage.getItem("userName") || "";
+let storesTouched = false; // je li korisnik ručno mijenjao dućane u formi
+const newStores = new Set();
 
 // ── Pomoćne ────────────────────────────────────────────────────
 function esc(s) {
@@ -98,18 +114,48 @@ function parsePrice(str) {
   const n = parseFloat(String(str).replace(",", ".").replace(/[^\d.]/g, ""));
   return isNaN(n) ? null : n;
 }
-// Dohvat dućana stavke kao polje (podržava i stari format `store`)
 function getStores(item) {
   if (Array.isArray(item.stores)) return item.stores;
   if (item.store) return [item.store];
   return [];
 }
-// Poredaj dućane redoslijedom iz STORES, ostale na kraj
 function sortStores(arr) {
   return [...arr].sort((a, b) => {
     const ia = STORES.indexOf(a), ib = STORES.indexOf(b);
     return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b, "hr");
   });
+}
+// Uobičajeni dućan za artikl (na temelju povijesti)
+function usualStoresFor(name) {
+  if (!name) return [];
+  const key = name.trim().toLowerCase();
+  const counts = {};
+  for (const p of purchases) {
+    if (p.name && p.name.toLowerCase() === key && p.store) {
+      counts[p.store] = (counts[p.store] || 0) + 1;
+    }
+  }
+  const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  return best ? [best[0]] : [];
+}
+
+// ── Toast (s opcionalnom akcijom, npr. Poništi) ────────────────
+let toastTimer = null;
+function toast(msg, actionLabel, actionFn) {
+  els.toast.innerHTML = `<span>${esc(msg)}</span>`;
+  if (actionLabel) {
+    const b = document.createElement("button");
+    b.className = "toast-action";
+    b.textContent = actionLabel;
+    b.addEventListener("click", () => {
+      els.toast.classList.remove("show");
+      if (actionFn) actionFn();
+    });
+    els.toast.appendChild(b);
+  }
+  els.toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => els.toast.classList.remove("show"), actionLabel ? 5000 : 2600);
 }
 
 // ── Glavni render ──────────────────────────────────────────────
@@ -117,9 +163,7 @@ function render() {
   els.viewList.classList.toggle("hidden", view !== "list" || !configured);
   els.viewHistory.classList.toggle("hidden", view !== "history");
   els.viewToggle.textContent = view === "list" ? "📜" : "🛒";
-  els.viewToggle.setAttribute("aria-label", view === "list" ? "Povijest" : "Lista");
   els.appTitle.textContent = view === "list" ? "🛒 Lista za kupovinu" : "📜 Povijest";
-
   if (view === "list") renderList();
   else renderHistory();
 }
@@ -134,8 +178,8 @@ function renderStorePicker() {
 
 function renderList() {
   renderStorePicker();
+  els.groupToggle.classList.toggle("active", groupByStore);
 
-  // Filter dućana — samo oni koji su u upotrebi
   const used = sortStores([...new Set(items.flatMap(getStores).filter(Boolean))]);
   const prevFilter = els.storeFilter.value;
   els.storeFilter.innerHTML =
@@ -144,7 +188,6 @@ function renderList() {
   els.storeFilter.value = used.includes(prevFilter) ? prevFilter : "";
   filterStore = els.storeFilter.value;
 
-  // Autocomplete imena (iz liste + povijesti)
   const allNames = [...new Set([...items.map((i) => i.name), ...purchases.map((p) => p.name)])].sort();
   els.suggestions.innerHTML = allNames.map((n) => `<option value="${esc(n)}">`).join("");
 
@@ -154,7 +197,7 @@ function renderList() {
   const active = visible.filter((i) => !i.bought);
   const bought = visible.filter((i) => i.bought);
 
-  els.activeList.innerHTML = active.map(renderItem).join("");
+  els.activeList.innerHTML = renderActiveItems(active);
   els.boughtList.innerHTML = bought.map(renderItem).join("");
 
   els.activeCount.textContent = active.length;
@@ -163,15 +206,37 @@ function renderList() {
   els.boughtSection.classList.toggle("hidden", bought.length === 0);
 }
 
+// Aktivne stavke — grupirano po dućanu ili ravno
+function renderActiveItems(active) {
+  if (!groupByStore) return active.map(renderItem).join("");
+  const groups = {};
+  for (const it of active) {
+    const key = sortStores(getStores(it))[0] || "Bez dućana";
+    (groups[key] ||= []).push(it);
+  }
+  const keys = Object.keys(groups).sort((a, b) => {
+    const ia = STORES.indexOf(a), ib = STORES.indexOf(b);
+    return (ia === -1 ? 98 : ia) - (ib === -1 ? 98 : ib) || a.localeCompare(b, "hr");
+  });
+  return keys
+    .map(
+      (k) =>
+        `<li class="group-head">${esc(k)} <span class="count">${groups[k].length}</span></li>` +
+        groups[k].map(renderItem).join("")
+    )
+    .join("");
+}
+
 function renderItem(item) {
   const stores = sortStores(getStores(item));
-  const storeBadges = stores
-    .map((s) => `<span class="store-badge">📍 ${esc(s)}</span>`)
-    .join("");
+  const storeBadges = stores.map((s) => `<span class="store-badge">📍 ${esc(s)}</span>`).join("");
   const editBtn = `<button class="store-badge edit ${stores.length ? "" : "empty"}"
       data-act="edit-stores" data-id="${item.id}">${stores.length ? "✏️" : "+ dućan"}</button>`;
 
-  // Inline uređivanje dućana
+  const qty = item.qty
+    ? `<button class="qty-badge" data-act="qty" data-id="${item.id}">×${esc(item.qty)}</button>`
+    : `<button class="qty-badge empty" data-act="qty" data-id="${item.id}">+ kol.</button>`;
+
   const editor =
     editingStoresFor === item.id
       ? `<div class="store-editor">
@@ -184,7 +249,6 @@ function renderItem(item) {
          </div>`
       : "";
 
-  // Cijena (samo za kupljene)
   const priceTxt = fmtPrice(item.price);
   const price = item.bought
     ? (priceTxt
@@ -192,14 +256,16 @@ function renderItem(item) {
         : `<button class="price-badge empty" data-act="price" data-id="${item.id}">💰 cijena</button>`)
     : "";
 
+  const who = item.added_by ? `<span class="who">👤 ${esc(item.added_by)}</span>` : "";
+
   return `
-    <li class="item ${item.bought ? "done" : ""}">
+    <li class="item ${item.bought ? "done" : ""}" data-id="${item.id}">
       <button class="check" data-act="toggle" data-id="${item.id}" aria-label="Označi kupljeno">
         ${item.bought ? "✓" : ""}
       </button>
       <div class="item-body">
-        <div class="item-name">${esc(item.name)}</div>
-        <div class="badges">${storeBadges}${editBtn}${price}</div>
+        <div class="item-name">${esc(item.name)} ${who}</div>
+        <div class="badges">${storeBadges}${editBtn}${qty}${price}</div>
         ${editor}
       </div>
       <button class="btn-del" data-act="del" data-id="${item.id}" aria-label="Obriši">×</button>
@@ -209,7 +275,6 @@ function renderItem(item) {
 function renderQuickAdd() {
   const stats = aggregateByName();
   const onList = new Set(items.map((i) => i.name.toLowerCase()));
-
   const top = Object.values(stats)
     .filter((s) => !onList.has(s.name.toLowerCase()))
     .sort((a, b) => b.count - a.count || b.lastAt - a.lastAt)
@@ -231,7 +296,7 @@ function aggregateByName() {
   for (const p of purchases) {
     const key = p.name.toLowerCase();
     if (!map[key]) {
-      map[key] = { name: p.name, count: 0, lastAt: 0, lastStore: null, prices: [] };
+      map[key] = { name: p.name, count: 0, lastAt: 0, lastStore: null, prices: [], perStore: {} };
     }
     const e = map[key];
     e.count++;
@@ -240,7 +305,12 @@ function aggregateByName() {
       e.lastStore = p.store || null;
     }
     if (typeof p.price === "number" && !isNaN(p.price)) {
-      e.prices.push({ price: p.price, store: p.store || "—", at: p.purchased_at || 0 });
+      const st = p.store || "—";
+      e.prices.push({ price: p.price, store: st, at: p.purchased_at || 0 });
+      const ps = (e.perStore[st] ||= { min: Infinity, last: null, lastAt: 0, count: 0 });
+      ps.count++;
+      ps.min = Math.min(ps.min, p.price);
+      if ((p.purchased_at || 0) >= ps.lastAt) { ps.lastAt = p.purchased_at || 0; ps.last = p.price; }
     }
   }
   return map;
@@ -261,13 +331,20 @@ function renderHistory() {
         return `<li class="item"><div class="item-body"><div class="item-name">${esc(s.name)}</div>
                 <div class="muted-line">još bez cijene · ${s.count}× kupljeno</div></div></li>`;
       }
-      const min = [...s.prices].sort((a, b) => a.price - b.price)[0];
-      const last = [...s.prices].sort((a, b) => b.at - a.at)[0];
-      const cheapest = `Najjeftinije: <strong>${min.price.toFixed(2)} €</strong> (${esc(min.store)})`;
-      const recent = `Zadnje: ${last.price.toFixed(2)} € (${esc(last.store)})`;
-      return `<li class="item"><div class="item-body">
+      const entries = Object.entries(s.perStore).sort((a, b) => a[1].min - b[1].min);
+      const cheapest = entries[0][0];
+      const rows = entries
+        .map(([st, ps]) => {
+          const extra = ps.count > 1 ? ` <small>(min ${ps.min.toFixed(2)})</small>` : "";
+          return `<div class="price-row ${st === cheapest ? "cheapest" : ""}">
+                    <span>${st === cheapest ? "🏆 " : ""}${esc(st)}</span>
+                    <span>${ps.last.toFixed(2)} €${extra}</span>
+                  </div>`;
+        })
+        .join("");
+      return `<li class="item col"><div class="item-body">
                 <div class="item-name">${esc(s.name)}</div>
-                <div class="muted-line">${cheapest} · ${recent}</div>
+                <div class="price-table">${rows}</div>
               </div></li>`;
     })
     .join("");
@@ -283,9 +360,10 @@ function renderHistory() {
       if (p.store) parts.push(esc(p.store));
       const priceTxt = fmtPrice(p.price);
       if (priceTxt) parts.push(priceTxt);
+      if (p.bought_by) parts.push("👤 " + esc(p.bought_by));
       return `<li class="item">
                 <div class="item-body">
-                  <div class="item-name">${esc(p.name)}</div>
+                  <div class="item-name">${esc(p.name)}${p.qty ? ` ×${esc(p.qty)}` : ""}</div>
                   <div class="muted-line">${parts.join(" · ")}</div>
                 </div>
                 <button class="btn-del" data-act="del-hist" data-id="${p.id}" aria-label="Obriši">×</button>
@@ -295,15 +373,18 @@ function renderHistory() {
 }
 
 // ── Akcije: lista ──────────────────────────────────────────────
-async function addItem(name, stores) {
+async function addItem(name, stores, qty) {
+  let st = stores && stores.length ? stores : usualStoresFor(name);
   try {
     await addDoc(itemsCol, {
       name,
-      stores: stores || [],
+      stores: st || [],
       store: null,
+      qty: qty || null,
       bought: false,
       bought_at: null,
       price: null,
+      added_by: userName || null,
       created_at: Date.now(),
     });
   } catch (e) { console.error(e); setSync(false); }
@@ -318,7 +399,6 @@ async function toggleBought(id) {
   } catch (e) { console.error(e); setSync(false); }
 }
 
-// Uključi/isključi dućan na postojećoj stavci
 async function toggleItemStore(id, store) {
   const item = items.find((i) => i.id === id);
   if (!item) return;
@@ -326,6 +406,16 @@ async function toggleItemStore(id, store) {
   cur.has(store) ? cur.delete(store) : cur.add(store);
   try {
     await updateDoc(doc(db, "items", id), { stores: [...cur], store: null });
+  } catch (e) { console.error(e); setSync(false); }
+}
+
+async function editQty(id) {
+  const item = items.find((i) => i.id === id);
+  if (!item) return;
+  const value = prompt("Količina (npr. 2 ili 1 kg):", item.qty || "");
+  if (value === null) return;
+  try {
+    await updateDoc(doc(db, "items", id), { qty: value.trim() || null });
   } catch (e) { console.error(e); setSync(false); }
 }
 
@@ -339,20 +429,28 @@ async function editPrice(id) {
   } catch (e) { console.error(e); setSync(false); }
 }
 
+// Brisanje s mogućnošću poništavanja
 async function deleteItem(id) {
-  try { await deleteDoc(doc(db, "items", id)); }
-  catch (e) { console.error(e); setSync(false); }
+  const item = items.find((i) => i.id === id);
+  if (!item) return;
+  const backup = { ...item };
+  delete backup.id;
+  try {
+    await deleteDoc(doc(db, "items", id));
+    toast(`Obrisano: ${item.name}`, "Poništi", async () => {
+      try { await addDoc(itemsCol, backup); } catch (e) { console.error(e); }
+    });
+  } catch (e) { console.error(e); setSync(false); }
 }
 
 function quickAdd(name, store) {
-  addItem(name, store ? [store] : []);
+  addItem(name, store ? [store] : [], null);
 }
 
-// Otvori dijalog za spremanje u povijest (odabir dućana + cijene po stavci)
+// ── Dijalog: spremanje u povijest ──────────────────────────────
 function openArchiveModal() {
   const bought = items.filter((i) => i.bought);
   if (bought.length === 0) return;
-
   els.archiveRows.innerHTML = bought
     .map((it) => {
       const primary = sortStores(getStores(it))[0] || "";
@@ -364,22 +462,18 @@ function openArchiveModal() {
       const priceVal = it.price != null ? esc(String(it.price)) : "";
       return `
         <div class="archive-row" data-id="${it.id}">
-          <div class="item-name">${esc(it.name)}</div>
+          <div class="item-name">${esc(it.name)}${it.qty ? ` ×${esc(it.qty)}` : ""}</div>
           <div class="store-picker single">${chips}</div>
           <input class="archive-price" type="text" inputmode="decimal"
                  placeholder="cijena (npr. 1,99)" value="${priceVal}" />
         </div>`;
     })
     .join("");
-
   els.archiveModal.classList.remove("hidden");
 }
-
 function closeArchiveModal() {
   els.archiveModal.classList.add("hidden");
 }
-
-// Potvrdi spremanje: pročitaj odabrane dućane/cijene i arhiviraj
 async function confirmArchive() {
   const rows = [...els.archiveRows.querySelectorAll(".archive-row")];
   try {
@@ -393,8 +487,10 @@ async function confirmArchive() {
       const price = parsePrice(row.querySelector(".archive-price").value);
       batch.set(doc(purchasesCol), {
         name: it.name,
+        qty: it.qty || null,
         store,
         price,
+        bought_by: userName || null,
         purchased_at: it.bought_at || Date.now(),
       });
       batch.delete(doc(db, "items", id));
@@ -405,18 +501,16 @@ async function confirmArchive() {
 }
 
 async function deleteHistory(id) {
-  if (!confirm("Obrisati ovaj zapis iz povijesti?")) return;
-  try { await deleteDoc(doc(db, "purchases", id)); }
-  catch (e) { console.error(e); setSync(false); }
-}
-
-// ── Kratka obavijest (toast) ───────────────────────────────────
-let toastTimer = null;
-function toast(msg) {
-  els.toast.textContent = msg;
-  els.toast.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => els.toast.classList.remove("show"), 2600);
+  const p = purchases.find((x) => x.id === id);
+  if (!p) return;
+  const backup = { ...p };
+  delete backup.id;
+  try {
+    await deleteDoc(doc(db, "purchases", id));
+    toast(`Obrisano iz povijesti: ${p.name}`, "Poništi", async () => {
+      try { await addDoc(purchasesCol, backup); } catch (e) { console.error(e); }
+    });
+  } catch (e) { console.error(e); setSync(false); }
 }
 
 // ── Glasovni unos (Web Speech API) ─────────────────────────────
@@ -426,46 +520,33 @@ const VOICE_CMD = /^(dodaj|dodati|daj|kupi|kupit|kupiti|treba(m|mo)?|trebalo bi)
 
 function initVoice() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    els.micBtn.classList.add("hidden"); // preglednik ne podržava
-    return;
-  }
+  if (!SR) { els.micBtn.classList.add("hidden"); return; }
   recognition = new SR();
   recognition.lang = "hr-HR";
   recognition.interimResults = true;
   recognition.continuous = false;
   recognition.maxAlternatives = 1;
-
   recognition.onresult = (e) => {
     let interim = "", final = "";
     for (const res of e.results) {
       if (res.isFinal) final += res[0].transcript;
       else interim += res[0].transcript;
     }
-    if (final) {
-      processVoice(final);
-      els.itemInput.value = "";
-    } else {
-      els.itemInput.value = interim;
-    }
+    if (final) { processVoice(final); els.itemInput.value = ""; }
+    else els.itemInput.value = interim;
   };
   recognition.onend = () => stopVoiceUI();
   recognition.onerror = (e) => {
     stopVoiceUI();
-    if (e.error === "not-allowed" || e.error === "service-not-allowed") {
-      toast("Mikrofon nije dopušten 🎤");
-    } else if (e.error === "no-speech") {
-      toast("Nisam ništa čuo 🤔");
-    }
+    if (e.error === "not-allowed" || e.error === "service-not-allowed") toast("Mikrofon nije dopušten 🎤");
+    else if (e.error === "no-speech") toast("Nisam ništa čuo 🤔");
   };
 }
-
 function stopVoiceUI() {
   listening = false;
   els.micBtn.classList.remove("listening");
   els.itemInput.placeholder = "Dodaj stavku (npr. mlijeko)";
 }
-
 function toggleVoice() {
   if (!recognition) return;
   if (listening) { recognition.stop(); return; }
@@ -477,18 +558,50 @@ function toggleVoice() {
     els.itemInput.placeholder = "Slušam… 🎤";
   } catch (e) { console.error(e); }
 }
-
-// Pretvori izgovoreno u stavke i dodaj ih
 function processVoice(text) {
   let t = text.trim().replace(/[.!?]+$/, "").replace(VOICE_CMD, "");
-  const parts = t
-    .split(/\s*,\s*|\s+i\s+|\s+pa\s+|\s+te\s+/i)
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const parts = t.split(/\s*,\s*|\s+i\s+|\s+pa\s+|\s+te\s+/i).map((s) => s.trim()).filter(Boolean);
   if (parts.length === 0) return;
   const stores = sortStores([...newStores]);
-  parts.forEach((name) => addItem(name, stores));
+  parts.forEach((name) => addItem(name, stores, null));
   toast(`Dodano: ${parts.join(", ")} ✓`);
+}
+
+// ── Swipe za brisanje (lijevo) ─────────────────────────────────
+let swipe = null;
+function initSwipe() {
+  document.addEventListener("touchstart", (e) => {
+    const li = e.target.closest(".item[data-id]");
+    if (!li || !els.viewList.contains(li)) return;
+    if (e.target.closest("button, input, select, .store-editor")) return;
+    swipe = { li, id: li.dataset.id, x: e.touches[0].clientX, y: e.touches[0].clientY, moved: false };
+  }, { passive: true });
+
+  document.addEventListener("touchmove", (e) => {
+    if (!swipe) return;
+    const dx = e.touches[0].clientX - swipe.x;
+    const dy = e.touches[0].clientY - swipe.y;
+    if (Math.abs(dx) > Math.abs(dy) && dx < 0) {
+      swipe.moved = true;
+      swipe.li.style.transform = `translateX(${Math.max(dx, -120)}px)`;
+      swipe.li.style.opacity = String(1 + Math.max(dx, -120) / 240);
+    }
+  }, { passive: true });
+
+  document.addEventListener("touchend", () => {
+    if (!swipe) return;
+    const li = swipe.li;
+    const dx = parseFloat((li.style.transform.match(/-?\d+/) || [0])[0]);
+    if (dx <= -80) {
+      li.style.transform = "translateX(-100%)";
+      li.style.opacity = "0";
+      deleteItem(swipe.id);
+    } else {
+      li.style.transform = "";
+      li.style.opacity = "";
+    }
+    swipe = null;
+  });
 }
 
 // ── Event listeneri ────────────────────────────────────────────
@@ -497,11 +610,22 @@ if (configured) {
     e.preventDefault();
     const name = els.itemInput.value.trim();
     if (!name) return;
-    addItem(name, sortStores([...newStores]));
+    addItem(name, sortStores([...newStores]), els.qtyInput.value.trim());
     els.itemInput.value = "";
+    els.qtyInput.value = "";
     newStores.clear();
+    storesTouched = false;
     renderStorePicker();
     els.itemInput.focus();
+  });
+
+  // Pri tipkanju poznatog artikla — predloži uobičajeni dućan
+  els.itemInput.addEventListener("input", () => {
+    if (storesTouched) return;
+    const def = usualStoresFor(els.itemInput.value);
+    newStores.clear();
+    def.forEach((s) => newStores.add(s));
+    renderStorePicker();
   });
 
   document.addEventListener("click", (e) => {
@@ -513,16 +637,17 @@ if (configured) {
     else if (act === "toggle-item-store") toggleItemStore(id, store);
     else if (act === "close-store-edit") { editingStoresFor = null; render(); }
     else if (act === "toggle-new-store") {
+      storesTouched = true;
       newStores.has(store) ? newStores.delete(store) : newStores.add(store);
       renderStorePicker();
     }
     else if (act === "archive-store") {
-      // Jedan dućan po retku: ako je već odabran, odznači; inače odaberi samo njega
       const row = btn.closest(".archive-row");
-      const wasSelected = btn.classList.contains("selected");
+      const was = btn.classList.contains("selected");
       row.querySelectorAll(".store-chip").forEach((c) => c.classList.remove("selected"));
-      if (!wasSelected) btn.classList.add("selected");
+      if (!was) btn.classList.add("selected");
     }
+    else if (act === "qty") editQty(id);
     else if (act === "price") editPrice(id);
     else if (act === "del") deleteItem(id);
     else if (act === "del-hist") deleteHistory(id);
@@ -530,6 +655,11 @@ if (configured) {
   });
 
   els.storeFilter.addEventListener("change", render);
+  els.groupToggle.addEventListener("click", () => {
+    groupByStore = !groupByStore;
+    localStorage.setItem("groupByStore", groupByStore ? "1" : "0");
+    render();
+  });
   els.clearBought.addEventListener("click", openArchiveModal);
   els.archiveCancel.addEventListener("click", closeArchiveModal);
   els.archiveConfirm.addEventListener("click", confirmArchive);
@@ -544,29 +674,34 @@ if (configured) {
     view = view === "list" ? "history" : "list";
     render();
   });
+  els.nameBtn.addEventListener("click", () => {
+    const v = prompt("Tvoje ime (za oznaku tko je dodao/kupio):", userName);
+    if (v === null) return;
+    userName = v.trim();
+    localStorage.setItem("userName", userName);
+    toast(userName ? `Bok, ${userName}! 👋` : "Ime uklonjeno");
+  });
 
   els.micBtn.addEventListener("click", toggleVoice);
   initVoice();
+  initSwipe();
 
-  // Sinkronizacija uživo: lista
-  onSnapshot(
-    itemsCol,
-    (snap) => {
-      items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      items.sort((a, b) => (a.created_at || 0) - (b.created_at || 0));
-      setSync(true);
-      render();
-    },
-    (err) => { console.error(err); setSync(false); }
-  );
+  onSnapshot(itemsCol, (snap) => {
+    items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    items.sort((a, b) => (a.created_at || 0) - (b.created_at || 0));
+    setSync(true);
+    render();
+  }, (err) => { console.error(err); setSync(false); });
 
-  // Sinkronizacija uživo: povijest
-  onSnapshot(
-    purchasesCol,
-    (snap) => {
-      purchases = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      render();
-    },
-    (err) => { console.error(err); setSync(false); }
-  );
+  onSnapshot(purchasesCol, (snap) => {
+    purchases = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    render();
+  }, (err) => { console.error(err); setSync(false); });
+}
+
+// ── Service worker (offline / PWA) ─────────────────────────────
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch((e) => console.warn("SW:", e));
+  });
 }

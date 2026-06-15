@@ -7,18 +7,21 @@ a hosta se besplatno na GitHub Pages.
 ## Funkcionalnosti
 
 **Lista (faza 1)**
-- ➕ Dodavanje stavki
+- ➕ Dodavanje stavki (s količinom, npr. „×2", „1 kg")
 - ✅ Označavanje kao kupljeno
-- 🏪 Odabir dućana iz fiksne liste (Konzum, DM, Lidl, Tvornica Zdrave Hrane), može više po stavci + filtriranje po dućanu
-- 💡 Prijedlozi (autocomplete) na temelju prijašnjih unosa
+- 🏪 Odabir dućana iz fiksne liste (Konzum, DM, Lidl, Tvornica Zdrave Hrane), može više po stavci + filtriranje
+- 📑 Grupiranje liste po dućanu (dok kupuješ vidiš stavke skupljene po dućanu)
+- 💡 Prijedlozi (autocomplete) + automatski predloženi dućan po artiklu (iz povijesti)
 - 🎤 Glasovni unos — npr. „Dodaj kruh i mlijeko" (Web Speech API, hr-HR; Chrome/Safari)
+- 👈 Povuci stavku ulijevo za brisanje + „Poništi"
+- 👤 Oznaka tko je dodao / kupio (ime se postavlja gumbom u zaglavlju)
 - 🔄 Sinkronizacija uživo između telefona
-- 📱 Može se "instalirati" na početni ekran (PWA)
+- 📲 Radi offline (service worker) i instalira se na početni ekran (PWA)
 
 **Povijest i cijene (faza 2)**
 - 💰 Upis cijene na kupljenu stavku
-- 📦 „Spremi u povijest" — arhivira kupljene stavke (datum, dućan, cijena)
-- 📊 Pregled cijena po artiklu (najjeftiniji dućan + zadnja cijena)
+- 📦 „Spremi u povijest" — dijalog s odabirom dućana i cijene po stavci
+- 📊 Usporedba cijena po dućanu za svaki artikl (najjeftiniji označen 🏆)
 - 📅 Kronološka povijest kupovina s pretragom
 - ⚡ Brzi unos — najčešći artikli iz povijesti dodaju se jednim dodirom (s prošlim dućanom)
 
