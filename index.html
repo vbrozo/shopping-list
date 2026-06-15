@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#2e7d32" />
+  <title>🛒 Lista za kupovinu</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>🛒 Lista za kupovinu</h1>
+    <span id="sync-dot" class="sync-dot" title="Status veze"></span>
+  </header>
+
+  <main class="container">
+    <!-- Poruka ako Supabase nije postavljen -->
+    <div id="setup-notice" class="notice hidden">
+      <h2>⚙️ Potrebno je postaviti bazu</h2>
+      <p>Otvori datoteku <code>config.js</code> i upiši svoj <strong>Supabase URL</strong> i <strong>anon ključ</strong>.
+         Upute se nalaze u <code>README.md</code>.</p>
+    </div>
+
+    <!-- Forma za dodavanje -->
+    <form id="add-form" class="add-form">
+      <input
+        id="item-input"
+        type="text"
+        placeholder="Dodaj stavku (npr. mlijeko)"
+        autocomplete="off"
+        list="suggestions"
+        required />
+      <datalist id="suggestions"></datalist>
+      <input
+        id="store-input"
+        type="text"
+        placeholder="Dućan (nije obavezno)"
+        autocomplete="off"
+        list="store-suggestions" />
+      <datalist id="store-suggestions"></datalist>
+      <button type="submit" class="btn-add" aria-label="Dodaj">➕ Dodaj</button>
+    </form>
+
+    <!-- Filter po dućanu -->
+    <div class="toolbar">
+      <label for="store-filter">Dućan:</label>
+      <select id="store-filter">
+        <option value="">Svi</option>
+      </select>
+    </div>
+
+    <!-- Aktivne stavke -->
+    <section>
+      <h2 class="section-title">Za kupiti <span id="active-count" class="count">0</span></h2>
+      <ul id="active-list" class="list"></ul>
+      <p id="empty-active" class="empty hidden">Lista je prazna. Dodaj prvu stavku! 🎉</p>
+    </section>
+
+    <!-- Kupljene stavke -->
+    <section id="bought-section" class="hidden">
+      <div class="section-header">
+        <h2 class="section-title">Kupljeno <span id="bought-count" class="count">0</span></h2>
+        <button id="clear-bought" class="btn-text">Očisti kupljeno</button>
+      </div>
+      <ul id="bought-list" class="list bought"></ul>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
