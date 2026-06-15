@@ -16,7 +16,7 @@
     })();
   </script>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="styles.css?v=20" />
+  <link rel="stylesheet" href="styles.css?v=21" />
 </head>
 <body>
   <header class="app-header">
@@ -59,7 +59,7 @@
         <div id="add-details" class="add-details hidden">
           <span class="picker-label">Količina:</span>
           <div class="qty-row">
-            <select id="qty-value" class="qty-select"></select>
+            <input id="qty-value" class="qty-num" type="text" inputmode="decimal" placeholder="količina" autocomplete="off" />
             <div id="qty-units" class="qty-units"></div>
           </div>
           <span class="picker-label">Dućan (može više):</span>
@@ -184,7 +184,7 @@
 
       <label class="sheet-label">Količina</label>
       <div class="qty-row">
-        <select id="hist-qty-value" class="qty-select"></select>
+        <input id="hist-qty-value" class="qty-num" type="text" inputmode="decimal" placeholder="količina" autocomplete="off" />
         <div id="hist-qty-units" class="qty-units"></div>
       </div>
 
@@ -213,7 +213,7 @@
 
       <label class="sheet-label">Količina</label>
       <div class="qty-row">
-        <select id="edit-qty-value" class="qty-select"></select>
+        <input id="edit-qty-value" class="qty-num" type="text" inputmode="decimal" placeholder="količina" autocomplete="off" />
         <div id="edit-qty-units" class="qty-units"></div>
       </div>
 
@@ -230,7 +230,7 @@
     </div>
   </div>
 
-  <script src="config.js?v=20"></script>
-  <script type="module" src="app.js?v=20"></script>
+  <script src="config.js?v=21"></script>
+  <script type="module" src="app.js?v=21"></script>
 </body>
 </html>

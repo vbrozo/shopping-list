@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "20";
+const APP_VERSION = "21";
 
 // ── Monokromatske ikone (currentColor — prate temu) ────────────
 const ICONS = {
@@ -46,9 +46,8 @@ function icon(name) {
 const DEFAULT_STORES = ["Konzum", "DM", "Lidl", "Tvornica Zdrave Hrane"];
 let STORES = [...DEFAULT_STORES];
 
-// ── Količina: vrijednosti i jedinice ───────────────────────────
-const QTY_VALUES = ["", "0.5", "1", "1.5", "2", "2.5", "3", "4", "5", "6", "7", "8", "9", "10"];
-const QTY_UNITS = ["kom", "kg", "l"];
+// ── Količina: jedinice (vrijednost je slobodan unos) ───────────
+const QTY_UNITS = ["kom", "kg", "g", "l"];
 let addUnit = "kom"; // odabrana jedinica u formi za dodavanje
 
 // ── Konfiguracija / inicijalizacija ────────────────────────────
@@ -321,13 +320,7 @@ function toast(msg, actionLabel, actionFn) {
   toastTimer = setTimeout(() => els.toast.classList.remove("show"), actionLabel ? 5000 : 2600);
 }
 
-// ── Kontrola količine (dropdown vrijednosti + jedinice kom/kg/l) ─
-function qtyOptionsHTML(sel) {
-  const vals = (!sel || QTY_VALUES.includes(sel)) ? QTY_VALUES : [...QTY_VALUES, sel];
-  return vals
-    .map((v) => `<option value="${esc(v)}" ${v === sel ? "selected" : ""}>${v === "" ? "–" : esc(v)}</option>`)
-    .join("");
-}
+// ── Kontrola količine (slobodan broj + jedinice kom/kg/g/l) ────
 function unitChipsHTML(selected, act) {
   return QTY_UNITS
     .map((u) => `<button type="button" class="unit-chip ${u === selected ? "selected" : ""}" data-act="${act}" data-unit="${esc(u)}">${esc(u)}</button>`)
@@ -348,7 +341,7 @@ function parseQty(s) {
   return { value, unit };
 }
 function initAddQty() {
-  els.qtyValue.innerHTML = qtyOptionsHTML("");
+  els.qtyValue.value = "";
   renderAddUnits();
 }
 function renderAddUnits() {
@@ -363,7 +356,7 @@ function openEditSheet(id) {
   els.editName.value = item.name;
   const { value, unit } = parseQty(item.qty || "");
   editUnit = unit;
-  els.editQtyValue.innerHTML = qtyOptionsHTML(value);
+  els.editQtyValue.value = value;
   els.editQtyUnits.innerHTML = unitChipsHTML(editUnit, "edit-qty-unit");
   editStores.clear();
   getStores(item).forEach((s) => editStores.add(s));
@@ -404,7 +397,7 @@ function openHistSheet(id) {
   els.histName.value = p.name;
   const { value, unit } = parseQty(p.qty || "");
   histUnit = unit;
-  els.histQtyValue.innerHTML = qtyOptionsHTML(value);
+  els.histQtyValue.value = value;
   els.histQtyUnits.innerHTML = unitChipsHTML(histUnit, "hist-qty-unit");
   histStore = p.store || "";
   renderHistStores();

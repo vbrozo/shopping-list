@@ -229,7 +229,8 @@ code {
   gap: 8px;
   flex-wrap: wrap;
 }
-.qty-select {
+.qty-select,
+.qty-num {
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -238,6 +239,11 @@ code {
   font-size: 1rem;
   min-width: 80px;
 }
+.qty-num {
+  width: 96px;
+  flex: 0 0 auto;
+}
+.qty-num:focus { outline: none; border-color: var(--green); }
 .qty-units {
   display: flex;
   gap: 6px;
