@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "21";
+const APP_VERSION = "22";
 
 // ── Monokromatske ikone (currentColor — prate temu) ────────────
 const ICONS = {
@@ -250,10 +250,10 @@ function sortStores(arr) {
 // Uobičajeni dućan za artikl (na temelju povijesti)
 function usualStoresFor(name) {
   if (!name) return [];
-  const key = name.trim().toLowerCase();
+  const key = normKey(name);
   const counts = {};
   for (const p of purchases) {
-    if (p.name && p.name.toLowerCase() === key && p.store) {
+    if (p.name && normKey(p.name) === key && p.store) {
       counts[p.store] = (counts[p.store] || 0) + 1;
     }
   }
@@ -264,6 +264,10 @@ function usualStoresFor(name) {
 // Skini hrvatske dijakritike za usporedbu (č→c, ž→z, đ→d…)
 function deaccent(s) {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\u0111/g, "d");
+}
+// Kanonski klju\u010d naziva: bez razmaka, interpunkcije, kva\u010dica, velikih slova
+function normKey(name) {
+  return deaccent(String(name || "")).replace(/[^a-z0-9]/g, "");
 }
 // Prepoznavanje dućana u izgovorenom tekstu
 const VOICE_PREP = new Set(["iz", "u", "kod", "na", "sa", "s", "od"]);
@@ -496,7 +500,13 @@ function renderList() {
   els.storeFilter.value = used.includes(prevFilter) ? prevFilter : "";
   filterStore = els.storeFilter.value;
 
-  allNames = [...new Set([...items.map((i) => i.name), ...purchases.map((p) => p.name)])].sort();
+  // Prijedlozi — po jedan po normaliziranom nazivu (bez duplih varijanti)
+  const nameByKey = new Map();
+  for (const n of [...items.map((i) => i.name), ...purchases.map((p) => p.name)]) {
+    const k = normKey(n);
+    if (k && !nameByKey.has(k)) nameByKey.set(k, n);
+  }
+  allNames = [...nameByKey.values()].sort((a, b) => a.localeCompare(b, "hr"));
 
   renderQuickAdd();
 
@@ -590,15 +600,19 @@ function renderQuickAdd() {
     .join("");
 }
 
+// Grupira po NORMALIZIRANOM nazivu (bez razmaka/crtica/kvačica/velikih slova)
+// pa "Pom Bar – paprika", "Pom Bar paprika", "PomBar paprika" postaju jedno
 function aggregateByName() {
   const map = {};
   for (const p of purchases) {
-    const key = p.name.toLowerCase();
+    const key = normKey(p.name);
+    if (!key) continue;
     if (!map[key]) {
-      map[key] = { name: p.name, count: 0, lastAt: 0, lastStore: null, prices: [], perStore: {} };
+      map[key] = { name: p.name, count: 0, lastAt: 0, lastStore: null, prices: [], perStore: {}, nameCounts: {} };
     }
     const e = map[key];
     e.count++;
+    e.nameCounts[p.name] = (e.nameCounts[p.name] || 0) + 1;
     if ((p.purchased_at || 0) > e.lastAt) {
       e.lastAt = p.purchased_at || 0;
       e.lastStore = p.store || null;
@@ -611,6 +625,10 @@ function aggregateByName() {
       ps.min = Math.min(ps.min, p.price);
       if ((p.purchased_at || 0) >= ps.lastAt) { ps.lastAt = p.purchased_at || 0; ps.last = p.price; }
     }
+  }
+  // Prikazni naziv = najčešća varijanta zapisa
+  for (const e of Object.values(map)) {
+    e.name = Object.entries(e.nameCounts).sort((a, b) => b[1] - a[1])[0][0];
   }
   return map;
 }
