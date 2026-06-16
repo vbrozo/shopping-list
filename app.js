@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "27";
+const APP_VERSION = "28";
 
 // ── Monokromatske ikone (currentColor — prate temu) ────────────
 const ICONS = {
@@ -1056,7 +1056,7 @@ async function handleReceiptFile(file) {
 function fillReceiptReview(parsed, rawText) {
   els.receiptStatus.textContent = parsed.rows.length
     ? `Pronađeno ${parsed.rows.length} stavki. Provjeri i ispravi po potrebi.`
-    : "Nisam prepoznao stavke na računu. Pogledaj „Sirovi OCR tekst" niže ili pokušaj s oštrijom slikom.";
+    : "Nisam prepoznao stavke na računu. Pogledaj sirovi OCR tekst niže ili pokušaj s oštrijom slikom.";
 
   els.receiptRaw.textContent = rawText || "";
   els.receiptRawWrap.classList.toggle("hidden", !rawText);
