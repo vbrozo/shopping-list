@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "35";
+const APP_VERSION = "36";
 
 // ── Monokromatske ikone (currentColor — prate temu) ────────────
 const ICONS = {
@@ -318,6 +318,21 @@ function deaccent(s) {
 // Kanonski klju\u010d naziva: bez razmaka, interpunkcije, kva\u010dica, velikih slova
 function normKey(name) {
   return deaccent(String(name || "")).replace(/[^a-z0-9]/g, "");
+}
+// Levenshtein razmak — za prepoznavanje sličnih naziva (tipfeleri, npr. "Životinjsko" / "Životnjsko")
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  if (!m) return n;
+  if (!n) return m;
+  let prev = Array.from({ length: n + 1 }, (_, i) => i);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[n];
 }
 // Prepoznavanje dućana u izgovorenom tekstu
 const VOICE_PREP = new Set(["iz", "u", "kod", "na", "sa", "s", "od"]);
@@ -642,7 +657,7 @@ function renderItem(item) {
 function renderQuickAdd() {
   const stats = aggregateByName();
   const onList = new Set(items.map((i) => i.name.toLowerCase()));
-  const top = Object.values(stats)
+  const top = [...new Set(Object.values(stats))]
     .filter((s) => !onList.has(s.name.toLowerCase()))
     .sort((a, b) => b.count - a.count || b.lastAt - a.lastAt)
     .slice(0, 10);
@@ -684,11 +699,43 @@ function aggregateByName() {
       if ((p.purchased_at || 0) >= ps.lastAt) { ps.lastAt = p.purchased_at || 0; ps.last = p.price; }
     }
   }
+  // Spoji ključeve koji se razlikuju za tipfeler (npr. "zivotinjskocarstvo" / "zivotnjskocarstvo)
+  const keys = Object.keys(map);
+  const used = new Set();
+  const merged = {};
+  for (let i = 0; i < keys.length; i++) {
+    const ki = keys[i];
+    if (used.has(ki)) continue;
+    const target = map[ki];
+    used.add(ki);
+    merged[ki] = target;
+    for (let j = i + 1; j < keys.length; j++) {
+      const kj = keys[j];
+      if (used.has(kj)) continue;
+      const maxLen = Math.max(ki.length, kj.length);
+      if (maxLen < 6) continue; // kratki nazivi: rizik lažnog spajanja
+      const maxDist = maxLen <= 9 ? 1 : 2;
+      if (levenshtein(ki, kj) > maxDist) continue;
+      const e2 = map[kj];
+      target.count += e2.count;
+      for (const [nm, c] of Object.entries(e2.nameCounts)) target.nameCounts[nm] = (target.nameCounts[nm] || 0) + c;
+      target.prices.push(...e2.prices);
+      for (const [st, ps] of Object.entries(e2.perStore)) {
+        const tp = (target.perStore[st] ||= { min: Infinity, last: null, lastAt: 0, count: 0 });
+        tp.count += ps.count;
+        tp.min = Math.min(tp.min, ps.min);
+        if (ps.lastAt >= tp.lastAt) { tp.lastAt = ps.lastAt; tp.last = ps.last; }
+      }
+      if (e2.lastAt > target.lastAt) { target.lastAt = e2.lastAt; target.lastStore = e2.lastStore; }
+      used.add(kj);
+      merged[kj] = target; // alias — pretraga po oba ključa vraća isti spojeni zapis
+    }
+  }
   // Prikazni naziv = najčešća varijanta zapisa
-  for (const e of Object.values(map)) {
+  for (const e of new Set(Object.values(merged))) {
     e.name = Object.entries(e.nameCounts).sort((a, b) => b[1] - a[1])[0][0];
   }
-  return map;
+  return merged;
 }
 
 // Procjena cijene košarice + pametni dućan (na temelju povijesti cijena)
@@ -736,7 +783,7 @@ function renderHistory() {
   const q = historyQuery.trim().toLowerCase();
   els.emptyHistory.classList.toggle("hidden", purchases.length > 0);
 
-  const stats = Object.values(aggregateByName())
+  const stats = [...new Set(Object.values(aggregateByName()))]
     .filter((s) => !q || s.name.toLowerCase().includes(q))
     .sort((a, b) => a.name.localeCompare(b.name, "hr"));
 
