@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "30";
+const APP_VERSION = "31";
 
 // ── Monokromatske ikone (currentColor — prate temu) ────────────
 const ICONS = {
@@ -65,6 +65,7 @@ const els = {
   viewSettings: $("view-settings"),
   settingsBack: $("settings-back"),
   themeOptions: $("theme-options"),
+  accentOptions: $("accent-options"),
   settingsStores: $("settings-stores"),
   addStoreForm: $("add-store-form"),
   newStoreInput: $("new-store-input"),
@@ -152,6 +153,7 @@ function effectiveTheme() {
 }
 function applyTheme() {
   document.documentElement.classList.toggle("dark", effectiveTheme() === "dark");
+  syncThemeColorMeta();
 }
 function currentThemeChoice() {
   const t = localStorage.getItem("theme");
@@ -165,6 +167,23 @@ function setThemeChoice(choice) {
 themeMedia.addEventListener("change", () => {
   if (!localStorage.getItem("theme")) applyTheme(); // prati sustav dok nije ručno postavljeno
 });
+
+// ── Boja naglaska (accent) ──────────────────────────────────────
+const ACCENTS = ["green", "blue", "purple", "orange", "teal", "red"];
+function currentAccent() {
+  const a = localStorage.getItem("accent");
+  return ACCENTS.includes(a) ? a : "green";
+}
+function setAccent(accent) {
+  localStorage.setItem("accent", accent);
+  document.documentElement.setAttribute("data-accent", accent);
+  syncThemeColorMeta();
+}
+function syncThemeColorMeta() {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = getComputedStyle(document.documentElement).getPropertyValue("--green").trim();
+}
+
 applyTheme();
 
 // ── Tvrdo osvježi (za fazu testiranja): odjavi SW, očisti cache, reload ─
@@ -764,6 +783,11 @@ function renderSettings() {
   [...els.themeOptions.querySelectorAll(".seg-btn")].forEach((b) =>
     b.classList.toggle("selected", b.dataset.theme === choice)
   );
+  // Boja
+  const accent = currentAccent();
+  [...els.accentOptions.querySelectorAll(".accent-dot")].forEach((b) =>
+    b.classList.toggle("selected", b.dataset.accent === accent)
+  );
   // Dućani
   els.settingsStores.innerHTML = STORES.map(
     (s) =>
@@ -1347,6 +1371,7 @@ if (configured) {
       els.itemInput.focus();
     }
     else if (act === "theme-set") { setThemeChoice(btn.dataset.theme); renderSettings(); }
+    else if (act === "accent-set") { setAccent(btn.dataset.accent); renderSettings(); }
     else if (act === "store-del") removeStore(btn.dataset.store);
   });
 

@@ -11,6 +11,20 @@
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
+/* ── Boja naglaska (accent) — biraju se u Postavkama ───────────── */
+html[data-accent="blue"]    { --green: #1565c0; --green-dark: #0d47a1; }
+html[data-accent="purple"]  { --green: #6a1b9a; --green-dark: #4a148c; }
+html[data-accent="orange"]  { --green: #e65100; --green-dark: #bf360c; }
+html[data-accent="teal"]    { --green: #00796b; --green-dark: #004d40; }
+html[data-accent="red"]     { --green: #c62828; --green-dark: #8e0000; }
+
+html.dark[data-accent="green"]  { --green: #43a047; --green-dark: #81c784; }
+html.dark[data-accent="blue"]   { --green: #42a5f5; --green-dark: #90caf9; }
+html.dark[data-accent="purple"] { --green: #ab47bc; --green-dark: #ce93d8; }
+html.dark[data-accent="orange"] { --green: #ff9800; --green-dark: #ffcc80; }
+html.dark[data-accent="teal"]   { --green: #26a69a; --green-dark: #80cbc4; }
+html.dark[data-accent="red"]    { --green: #e57373; --green-dark: #ef9a9a; }
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
@@ -897,6 +911,23 @@ code {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+.accent-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.accent-dot {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+.accent-dot.selected {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--card);
 }
 .seg-btn {
   flex: 1;

@@ -6,22 +6,34 @@
   <meta name="theme-color" content="#2e7d32" />
   <title>🛒 Lista za kupovinu</title>
   <script>
-    // Primijeni temu odmah (bez bljeska svjetla pri učitavanju)
+    // Primijeni temu i boju odmah (bez bljeska pri učitavanju)
     (function () {
       try {
         var t = localStorage.getItem("theme");
         var dark = t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
         if (dark) document.documentElement.classList.add("dark");
+        var accent = localStorage.getItem("accent") || "green";
+        document.documentElement.setAttribute("data-accent", accent);
+        var colors = {
+          green:  dark ? "#43a047" : "#2e7d32",
+          blue:   dark ? "#42a5f5" : "#1565c0",
+          purple: dark ? "#ab47bc" : "#6a1b9a",
+          orange: dark ? "#ff9800" : "#e65100",
+          teal:   dark ? "#26a69a" : "#00796b",
+          red:    dark ? "#e57373" : "#c62828",
+        };
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta && colors[accent]) meta.content = colors[accent];
       } catch (e) {}
     })();
   </script>
   <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icon-180.png?v=30" />
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=30" />
+  <link rel="apple-touch-icon" href="icon-180.png?v=31" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=31" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Lista" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="stylesheet" href="styles.css?v=30" />
+  <link rel="stylesheet" href="styles.css?v=31" />
 </head>
 <body>
   <header class="app-header">
@@ -148,6 +160,18 @@
       </section>
 
       <section class="settings-block">
+        <h2 class="section-title">Boja</h2>
+        <div id="accent-options" class="accent-row">
+          <button type="button" class="accent-dot" data-act="accent-set" data-accent="green" style="background:#2e7d32" aria-label="Zelena"></button>
+          <button type="button" class="accent-dot" data-act="accent-set" data-accent="blue" style="background:#1565c0" aria-label="Plava"></button>
+          <button type="button" class="accent-dot" data-act="accent-set" data-accent="purple" style="background:#6a1b9a" aria-label="Ljubičasta"></button>
+          <button type="button" class="accent-dot" data-act="accent-set" data-accent="orange" style="background:#e65100" aria-label="Narančasta"></button>
+          <button type="button" class="accent-dot" data-act="accent-set" data-accent="teal" style="background:#00796b" aria-label="Tirkizna"></button>
+          <button type="button" class="accent-dot" data-act="accent-set" data-accent="red" style="background:#c62828" aria-label="Crvena"></button>
+        </div>
+      </section>
+
+      <section class="settings-block">
         <h2 class="section-title">Dućani</h2>
         <p class="hint">Zajednički za sve uređaje. Koriste se pri dodavanju stavki i u povijesti.</p>
         <ul id="settings-stores" class="list"></ul>
@@ -269,7 +293,7 @@
     </div>
   </div>
 
-  <script src="config.js?v=30"></script>
-  <script type="module" src="app.js?v=30"></script>
+  <script src="config.js?v=31"></script>
+  <script type="module" src="app.js?v=31"></script>
 </body>
 </html>
