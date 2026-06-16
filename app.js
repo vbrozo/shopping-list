@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "28";
+const APP_VERSION = "29";
 
 // ── Monokromatske ikone (currentColor — prate temu) ────────────
 const ICONS = {
@@ -964,7 +964,9 @@ function parseReceipt(text) {
     if (!isNaN(ms)) out.date = ms;
   }
 
-  const STOP = /^(ukupno|p\s*pdv|pdv\b|osnovica|na[čc]in pla|gotovina|kartica|iznos\b)/i;
+  // NB: ne uključuje "kartica" — Konzum maskirani broj kartice stoji na vrhu,
+  // prije stavki; plaćanje karticom na dnu ionako presretne "ukupno".
+  const STOP = /^(ukupno|p\s*pdv|pdv\b|osnovica|na[čc]in pla|gotovina|iznos\b)/i;
   const SKIP = /(popust|naknad|paketi|vre[ćc]ic|bonus|sli[čc]ic|rabat)/i;
   // Novčani iznos: 1–4 znamenke + 2 decimale (npr. 4,99). Ne hvata 0,5L (1 decimala).
   const PRICE = /\d{1,4}[.,]\d{2}(?!\d)/g;
@@ -991,15 +993,16 @@ function parseReceipt(text) {
     if (cijena == null || iznos == null || cijena <= 0) continue;
 
     // Naziv = dio prije prvog novčanog iznosa
-    let name = line.slice(0, line.indexOf(prices[0])).trim();
+    let name = line.slice(0, line.indexOf(prices[0])).replace(/[\s,.;:]+$/, "").trim();
 
     let qtyNum = iznos / cijena;
     // Skini "Kol" broj s kraja naziva ako odgovara izračunatoj količini
-    const tail = name.match(/\s+(\d{1,3}(?:[.,]\d{1,3})?)\s*$/);
+    // (dopušta i zaostali zarez iz OCR-a, npr. "... GL 2 1,")
+    const tail = name.match(/\s+(\d{1,3}(?:[.,]\d{1,3})?)[.,]?\s*$/);
     if (tail) {
       const tok = parsePrice(tail[1]);
       if (tok != null && Math.abs(tok - qtyNum) < 0.06) {
-        name = name.slice(0, tail.index).trim();
+        name = name.slice(0, tail.index).replace(/[\s,.;:]+$/, "").trim();
         qtyNum = tok; // otisnuta količina je točnija od izračunate
       }
     }
