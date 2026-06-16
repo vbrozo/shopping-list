@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "31";
+const APP_VERSION = "32";
 
 // ── Monokromatske ikone (currentColor — prate temu) ────────────
 const ICONS = {
@@ -37,6 +37,7 @@ const ICONS = {
   moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"></path>',
   phone: '<rect x="6" y="2" width="12" height="20" rx="2"></rect><line x1="11" y1="18" x2="13" y2="18"></line>',
   refresh: '<polyline points="23 4 23 10 17 10"></polyline><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"></path>',
+  chevron: '<polyline points="6 9 12 15 18 9"></polyline>',
 };
 function icon(name) {
   return `<svg class="icn" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ""}</svg>`;
@@ -233,6 +234,7 @@ const editStores = new Set(); // odabrani dućani u editoru
 let histId = null; // zapis povijesti koji se uređuje
 let histUnit = "kom"; // jedinica u editoru povijesti
 let histStore = ""; // dućan u editoru povijesti (jedan)
+let collapsedTrips = new Set(); // sklopljene grupe kupovina u povijesti (po trip ključu)
 let groupByStore = localStorage.getItem("groupByStore") === "1";
 let userName = localStorage.getItem("userName") || "";
 let storesTouched = false; // je li korisnik ručno mijenjao dućane u formi
@@ -259,6 +261,15 @@ function fmtPrice(p) {
 function fmtDate(ms) {
   if (!ms) return "";
   return new Date(ms).toLocaleDateString("hr-HR", { day: "numeric", month: "numeric", year: "numeric" });
+}
+function newTripId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+// Stavke bez trip_id (stari zapisi) grupiraju se po danu + dućanu kao zamjenski ključ.
+function tripKeyOf(p) {
+  if (p.trip_id) return "t:" + p.trip_id;
+  const day = p.purchased_at ? new Date(p.purchased_at).toDateString() : "?";
+  return "legacy:" + day + ":" + (p.store || "");
 }
 function msToDateInput(ms) {
   const d = new Date(ms || Date.now());
@@ -751,26 +762,59 @@ function renderHistory() {
     })
     .join("");
 
-  const timeline = purchases
-    .filter((p) => !q || p.name.toLowerCase().includes(q))
-    .sort((a, b) => (b.purchased_at || 0) - (a.purchased_at || 0));
+  const filtered = purchases.filter((p) => !q || p.name.toLowerCase().includes(q));
 
-  els.timelineSection.classList.toggle("hidden", timeline.length === 0);
-  els.historyList.innerHTML = timeline
-    .map((p) => {
-      const parts = [fmtDate(p.purchased_at)];
-      if (p.store) parts.push(`${icon("pin")} ${esc(p.store)}`);
-      const priceTxt = fmtPrice(p.price);
-      if (priceTxt) parts.push(`${icon("tag")} ${priceTxt}`);
-      if (p.bought_by) parts.push(`${icon("user")} ${esc(p.bought_by)}`);
-      const showReceipt = p.receipt_name && normKey(p.receipt_name) !== normKey(p.name);
-      return `<li class="item">
-                <div class="item-main" data-act="edit-hist" data-id="${p.id}">
-                  <div class="item-name">${esc(p.name)}${p.qty ? ` ×${esc(p.qty)}` : ""}</div>
-                  <div class="muted-line">${parts.join(" · ")}</div>
-                  ${showReceipt ? `<div class="muted-line tiny">${icon("tag")} na računu: ${esc(p.receipt_name)}</div>` : ""}
+  // Grupiraj po kupovini (trip_id ili, za stare zapise, dan+dućan)
+  const groups = new Map();
+  for (const p of filtered) {
+    const key = tripKeyOf(p);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(p);
+  }
+  const tripList = [...groups.entries()]
+    .map(([key, ps]) => ({
+      key,
+      items: ps.sort((a, b) => a.name.localeCompare(b.name, "hr")),
+      maxAt: Math.max(...ps.map((p) => p.purchased_at || 0)),
+    }))
+    .sort((a, b) => b.maxAt - a.maxAt);
+
+  els.timelineSection.classList.toggle("hidden", tripList.length === 0);
+  els.historyList.innerHTML = tripList
+    .map((trip) => {
+      const stores = [...new Set(trip.items.map((p) => p.store).filter(Boolean))];
+      const sum = trip.items.reduce((s, p) => s + (typeof p.price === "number" ? p.price : 0), 0);
+      const collapsed = collapsedTrips.has(trip.key);
+      const headParts = [fmtDate(trip.maxAt)];
+      if (stores.length) headParts.push(`${icon("pin")} ${esc(stores.join(", "))}`);
+      headParts.push(`${trip.items.length} ${trip.items.length === 1 ? "stavka" : "stavke"}`);
+      if (sum > 0) headParts.push(`${icon("tag")} ${sum.toFixed(2)} €`);
+
+      const rows = trip.items
+        .map((p) => {
+          const parts = [];
+          if (p.store && stores.length > 1) parts.push(`${icon("pin")} ${esc(p.store)}`);
+          const priceTxt = fmtPrice(p.price);
+          if (priceTxt) parts.push(`${icon("tag")} ${priceTxt}`);
+          if (p.bought_by) parts.push(`${icon("user")} ${esc(p.bought_by)}`);
+          const showReceipt = p.receipt_name && normKey(p.receipt_name) !== normKey(p.name);
+          return `<li class="item">
+                    <div class="item-main" data-act="edit-hist" data-id="${p.id}">
+                      <div class="item-name">${esc(p.name)}${p.qty ? ` ×${esc(p.qty)}` : ""}</div>
+                      ${parts.length ? `<div class="muted-line">${parts.join(" · ")}</div>` : ""}
+                      ${showReceipt ? `<div class="muted-line tiny">${icon("tag")} na računu: ${esc(p.receipt_name)}</div>` : ""}
+                    </div>
+                    <button class="btn-del" data-act="del-hist" data-id="${p.id}" aria-label="Obriši">×</button>
+                  </li>`;
+        })
+        .join("");
+
+      return `<li class="trip-group ${collapsed ? "collapsed" : ""}">
+                <div class="trip-header" data-act="toggle-trip" data-trip="${esc(trip.key)}">
+                  <div class="muted-line">${headParts.join(" · ")}</div>
+                  <span class="trip-chevron">${icon("chevron")}</span>
                 </div>
-                <button class="btn-del" data-act="del-hist" data-id="${p.id}" aria-label="Obriši">×</button>
+                <ul class="list trip-items">${rows}</ul>
               </li>`;
     })
     .join("");
@@ -901,6 +945,7 @@ function closeArchiveModal() {
 }
 async function confirmArchive() {
   const rows = [...els.archiveRows.querySelectorAll(".archive-row")];
+  const tripId = newTripId();
   try {
     const batch = writeBatch(db);
     for (const row of rows) {
@@ -917,6 +962,7 @@ async function confirmArchive() {
         price,
         bought_by: userName || null,
         purchased_at: it.bought_at || Date.now(),
+        trip_id: tripId,
       });
       batch.delete(doc(db, "items", id));
     }
@@ -1145,6 +1191,7 @@ async function confirmReceipt() {
   const sel = els.receiptStores.querySelector(".store-chip.selected");
   const store = sel ? sel.dataset.store : null;
   const at = dateInputToMs(els.receiptDate.value, Date.now());
+  const tripId = newTripId();
   try {
     const batch = writeBatch(db);
     let n = 0;
@@ -1159,6 +1206,7 @@ async function confirmReceipt() {
         price: parsePrice(row.querySelector(".rr-price").value),
         bought_by: userName || null,
         purchased_at: at,
+        trip_id: tripId,
       });
       n++;
     }
@@ -1363,6 +1411,11 @@ if (configured) {
     }
     else if (act === "del") deleteItem(id);
     else if (act === "del-hist") deleteHistory(id);
+    else if (act === "toggle-trip") {
+      const key = btn.dataset.trip;
+      collapsedTrips.has(key) ? collapsedTrips.delete(key) : collapsedTrips.add(key);
+      renderHistory();
+    }
     else if (act === "quick") quickAdd(btn.dataset.name, store);
     else if (act === "suggest") {
       els.itemInput.value = btn.dataset.name;

@@ -577,6 +577,35 @@ code {
 }
 .muted-line.tiny { font-size: 0.74rem; opacity: 0.85; }
 
+/* Grupa kupovine (povijest) */
+.trip-group {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.trip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+.trip-header .muted-line { margin: 0; }
+.trip-chevron {
+  display: flex;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+.trip-group.collapsed .trip-chevron { transform: rotate(-180deg); }
+.trip-items {
+  padding: 0 10px 10px;
+  gap: 6px;
+}
+.trip-group.collapsed .trip-items { display: none; }
+
 /* Brzi unos — chips */
 .chips {
   display: flex;
