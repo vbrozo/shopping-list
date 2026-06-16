@@ -22,7 +22,13 @@ radi **offline** (PWA) i hosta se besplatno na **GitHub Pages**. Sučelje je na 
 - Odabir dućana **iz liste koja se uređuje u Postavkama** (zadano: Konzum, DM, Lidl, Tvornica Zdrave Hrane).
 - Jedna stavka može imati **više dućana** (npr. „kupiti u Konzumu ili Lidlu").
 - **Filtriranje** liste po dućanu.
-- **Grupiranje** liste po dućanu (📑) — dok kupuješ vidiš stavke skupljene po dućanu.
+- **Grupiranje** liste — gumb 📑 kruži kroz: bez grupiranja → **po dućanu** → **po kategoriji** → bez.
+
+### 🗂️ Kategorije
+- Svaka stavka ima **jednu kategoriju** (npr. „🥦 Voće i povrće"); prikazuje se kao oznaka na kartici.
+- Kategorije se **uređuju u Postavkama** (zajedničke za sve uređaje), inicijalno popunjene popularnim HR kategorijama; emoji u nazivu je dopušten.
+- **Auto-prijedlog kategorije** — kad upišeš poznati artikl, predloži kategoriju koju mu obično daješ (kao i kod dućana).
+- **Grupiranje liste po kategoriji** (prati raspored polica) i **grupiranje cijena u povijesti po kategoriji** (padajući izbornik).
 
 ### 🎤 Unos i prijedlozi
 - **Glasovni unos** — npr. „Dodaj kruh i mlijeko" (više stavki odjednom). Prepoznaje i **dućan iz fraze**: „mlijeko iz Konzuma" → stavka *mlijeko* + dućan *Konzum* (podržava padeže). Web Speech API, jezik `hr-HR` (Chrome/Edge/Safari).
@@ -47,6 +53,7 @@ radi **offline** (PWA) i hosta se besplatno na **GitHub Pages**. Sučelje je na 
 ### ⚙️ Postavke
 - **Tema**: Svijetlo / Tamno / **Auto** (prati postavku sustava).
 - **Dućani**: dodavanje i brisanje (zajednički za sve uređaje).
+- **Kategorije**: dodavanje i brisanje (zajedničke za sve uređaje).
 - **Tvoje ime**: oznaka tko je dodao/kupio (sprema se po uređaju; gumb „Uredi" kad je već postavljeno).
 - **Očisti cache i osvježi** + prikaz verzije aplikacije.
 
@@ -110,9 +117,9 @@ U **Firestore Database → Rules** zalijepi sadržaj [`firestore.rules`](firesto
 
 ## Model podataka (Firestore)
 
-- **`items`** (trenutna lista): `name`, `stores[]`, `qty`, `bought`, `bought_at`, `price`, `urgent`, `added_by`, `created_at`
-- **`purchases`** (povijest): `name`, `receipt_name` (sirovi naziv s računa — za prepoznavanje pri ponovnom skeniranju), `qty`, `store`, `price`, `bought_by`, `purchased_at`
-- **`settings/app`**: `stores[]` (lista dućana)
+- **`items`** (trenutna lista): `name`, `stores[]`, `qty`, `category`, `bought`, `bought_at`, `price`, `urgent`, `recurring`, `added_by`, `created_at`
+- **`purchases`** (povijest): `name`, `receipt_name` (sirovi naziv s računa — za prepoznavanje pri ponovnom skeniranju), `qty`, `store`, `category`, `price`, `bought_by`, `purchased_at`, `trip_id` (oznaka kupovine za grupiranje)
+- **`settings/app`**: `stores[]` (lista dućana), `categories[]` (lista kategorija)
 
 ## Privatnost
 
@@ -132,8 +139,8 @@ python3 -m http.server 8000
 - 🔐 Zaštita prijavom (Firebase Auth) — privatna lista
 - 📈 Grafovi kretanja cijena kroz vrijeme
 - 📤 Izvoz povijesti (CSV)
-- 📊 Mjesečni trošak po dućanu
-- 🗂️ Kategorije/odjeli (voće-povrće, mliječno…) s redoslijedom polica po dućanu
+- 📊 Mjesečni trošak po dućanu / po kategoriji
+- 🗂️ Redoslijed kategorija = redoslijed polica (drag-and-drop u Postavkama)
 - 📝 Više listi (npr. „Tjedna kupovina", „Roštilj")
 - 🔔 Push obavijesti za hitne stavke / podsjetnici
 - 📦 Barkod skener za brzo dodavanje artikla

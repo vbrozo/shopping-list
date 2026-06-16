@@ -373,6 +373,14 @@ code {
   cursor: pointer;
   padding: 4px 8px;
 }
+.mini-select {
+  font-size: 0.82rem;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 8px;
+}
 
 .list {
   list-style: none;
@@ -464,6 +472,15 @@ code {
   text-overflow: ellipsis;
 }
 .meta-empty { font-style: italic; opacity: 0.8; }
+.cat-tag {
+  display: inline-block;
+  font-size: 0.78rem;
+  color: var(--green-dark);
+  background: var(--border);
+  background: color-mix(in srgb, var(--green) 14%, transparent);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
 .sheet-label {
   display: block;
   font-size: 0.8rem;
