@@ -1,5 +1,7 @@
 "use strict";
 
+import { raw } from "./html.js";
+
 // ── DOM reference + monokromatske ikone ────────────────────────
 export const $ = (id) => document.getElementById(id);
 
@@ -24,7 +26,7 @@ export const ICONS = {
   chevron: '<polyline points="6 9 12 15 18 9"></polyline>',
 };
 export function icon(name) {
-  return `<svg class="icn" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ""}</svg>`;
+  return raw(`<svg class="icn" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ""}</svg>`);
 }
 
 export const els = {

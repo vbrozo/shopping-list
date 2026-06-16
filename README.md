@@ -107,8 +107,9 @@ U **Firestore Database → Rules** zalijepi sadržaj [`firestore.rules`](firesto
 | Datoteka | Uloga |
 |---|---|
 | `index.html` | Struktura sučelja (lista, povijest, postavke, dijalozi) |
-| `app.js` | Sva logika (ES modul; Firestore, render, glasovni unos, ikone…) |
-| `styles.css` | Stilovi (uklj. tamni način) |
+| `app.js` | Ulazna točka (ES modul; vezuje module, event listenere, sync) |
+| `js/` | Ostatak logike po modulima (state, render, editori, akcije, OCR računa…) |
+| `css/` | Stilovi po komponentama (uklj. tamni način) |
 | `config.js` | Firebase konfiguracija (ispunjava korisnik) |
 | `sw.js` | Service worker (offline) |
 | `manifest.json` | PWA manifest |

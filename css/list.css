@@ -1,0 +1,476 @@
+/* Lista artikala, kartice, sažetak, brzi unos */
+/* Grupiranje po dućanu */
+.group-head {
+  list-style: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--green-dark);
+  padding: 10px 4px 2px;
+}
+
+.section-title {
+  font-size: 1rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 20px 0 8px;
+}
+.count {
+  display: inline-block;
+  background: var(--border);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0 8px;
+  font-size: 0.8rem;
+  margin-left: 4px;
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--danger);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.mini-select {
+  font-size: 0.82rem;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  cursor: pointer;
+}
+.item.col { cursor: default; }
+
+/* Swipe-za-brisanje: pomični sadržaj + crveni "Obriši" sloj ispod */
+.item.swipeable {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+.item.swipeable .item-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--card);
+  position: relative;
+  z-index: 1;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.item-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: #e53935;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 18px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.item.will-delete .item-bg { background: #b71c1c; }
+
+/* Jedinstvena kartica */
+.item-main {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+.item-row1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.item-row1 .item-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.qty-tag {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  color: #4527a0;
+  background: #ede7f6;
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.item-meta {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.meta-empty { font-style: italic; opacity: 0.8; }
+.cat-tag {
+  display: inline-block;
+  font-size: 0.78rem;
+  color: var(--green-dark);
+  background: var(--border);
+  background: color-mix(in srgb, var(--green) 14%, transparent);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.sheet-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 12px 0 5px;
+}
+
+.check {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--green);
+  background: transparent;
+  flex-shrink: 0;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 0.9rem;
+  color: #fff;
+  padding: 0;
+}
+.item.done .check {
+  background: var(--green);
+}
+
+.item-body {
+  flex: 1;
+  min-width: 0;
+}
+.item-name {
+  font-size: 1.05rem;
+  word-break: break-word;
+}
+.item.done .item-name {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.store-badge, .price-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.82rem;
+  border: none;
+  border-radius: 999px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.store-badge {
+  color: var(--green-dark);
+  background: #e8f5e9;
+}
+.price-badge {
+  color: #e65100;
+  background: #fff3e0;
+}
+.qty-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.82rem;
+  border: none;
+  border-radius: 999px;
+  padding: 6px 10px;
+  cursor: pointer;
+  color: #4527a0;
+  background: #ede7f6;
+}
+.store-badge.empty, .price-badge.empty, .qty-badge.empty {
+  color: var(--muted);
+  background: transparent;
+  border: 1px dashed var(--border);
+}
+
+.who {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* Tablica cijena po dućanu (povijest) */
+.item.col { display: block; }
+.price-table {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--muted);
+  padding: 2px 0;
+}
+.price-row.cheapest {
+  color: var(--green-dark);
+  font-weight: 600;
+}
+.price-row small { font-weight: 400; opacity: 0.8; }
+
+.muted-line {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.muted-line.tiny { font-size: 0.74rem; opacity: 0.85; }
+
+/* Grupa kupovine (povijest) */
+.trip-group {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.trip-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+}
+.trip-header-main {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+.trip-header .muted-line { margin: 0; }
+.btn-repeat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  color: var(--green);
+  cursor: pointer;
+}
+.btn-repeat .icn { width: 0.95em; height: 0.95em; }
+.trip-chevron {
+  display: flex;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.trip-group.collapsed .trip-chevron { transform: rotate(-180deg); }
+.trip-items {
+  padding: 0 10px 10px;
+  gap: 6px;
+}
+.trip-group.collapsed .trip-items { display: none; }
+
+/* Brzi unos — chips */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.chip {
+  background: var(--card);
+  border: 1px solid var(--green);
+  color: var(--green-dark);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.chip:active { background: #e8f5e9; }
+.chip-store {
+  font-size: 0.72rem;
+  color: var(--muted);
+  background: var(--bg);
+  border-radius: 999px;
+  padding: 1px 6px;
+}
+
+.hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+/* Odabir dućana (chips) */
+.store-picker-wrap {
+  flex: 1 1 100%;
+}
+.picker-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.store-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.store-chip {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.store-chip.selected {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Inline uređivanje dućana na stavci */
+.store-editor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+.store-editor .store-chip {
+  padding: 6px 10px;
+  font-size: 0.82rem;
+}
+.btn-text.done {
+  color: var(--green-dark);
+  align-self: center;
+}
+.store-badge.edit {
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--muted);
+}
+
+.toolbar input[type="text"] {
+  flex: 1;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 0.9rem;
+}
+
+.btn-del {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.btn-del:active { color: var(--danger); }
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 24px;
+}
+
+
+/* Sažetak: procjena košarice + pametni dućan */
+.summary {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  box-shadow: var(--shadow);
+}
+.summary-row {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.summary .muted { color: var(--muted); font-size: 0.82rem; }
+
+/* Hitno / zvjezdica */
+.star-btn {
+  background: none;
+  border: none;
+  padding: 0 2px 0 0;
+  margin: 0;
+  cursor: pointer;
+  color: var(--muted);
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.star-btn .icn { width: 1.05em; height: 1.05em; }
+.star-btn.on { color: #f0a000; }
+.star-btn.on .icn { fill: currentColor; }
+.item.urgent .item-inner { box-shadow: inset 4px 0 0 #f0a000; }
+
+/* Ponavljajuća stavka */
+.recur-btn {
+  background: none;
+  border: none;
+  padding: 0 2px 0 0;
+  margin: 0;
+  cursor: pointer;
+  color: var(--muted);
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.recur-btn .icn { width: 0.95em; height: 0.95em; }
+.recur-btn.on { color: var(--green); }
+

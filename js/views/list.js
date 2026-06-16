@@ -3,7 +3,7 @@
 import { state } from "../state.js";
 import { els, icon } from "../dom.js";
 import {
-  esc, sortStores, getStores, fmtPrice, normKey,
+  html, raw, sortStores, getStores, fmtPrice, normKey,
   unitChipsHTML, catChipsHTML, usualStoresFor, usualCategoryFor, aggregateByName,
 } from "../util.js";
 
@@ -28,13 +28,13 @@ export function renderAddUnits() {
 export function renderStorePicker() {
   els.storePicker.innerHTML = state.STORES.map(
     (s) =>
-      `<button type="button" class="store-chip ${newStores.has(s) ? "selected" : ""}"
-         data-act="toggle-new-store" data-store="${esc(s)}">${esc(s)}</button>`
+      html`<button type="button" class="store-chip ${newStores.has(s) ? "selected" : ""}"
+         data-act="toggle-new-store" data-store="${s}">${s}</button>`
   ).join("");
   const sel = sortStores([...newStores]);
   els.detailsToggle.innerHTML = sel.length
-    ? `${icon("bag")} ${esc(sel.join(", "))} ✓`
-    : `${icon("bag")} Dućan i količina`;
+    ? html`${icon("bag")} ${sel.join(", ")} ✓`
+    : html`${icon("bag")} Dućan i količina`;
   renderCatPicker();
 }
 
@@ -65,7 +65,7 @@ export function renderSuggestions(query) {
     .slice(0, 6);
   if (!matches.length) { hideSuggestions(); return; }
   els.suggestList.innerHTML = matches
-    .map((n) => `<li class="suggest-item" data-act="suggest" data-name="${esc(n)}">${esc(n)}</li>`)
+    .map((n) => html`<li class="suggest-item" data-act="suggest" data-name="${n}">${n}</li>`)
     .join("");
   els.suggestList.classList.remove("hidden");
 }
@@ -84,7 +84,7 @@ export function renderList() {
   const prevFilter = els.storeFilter.value;
   els.storeFilter.innerHTML =
     '<option value="">Svi</option>' +
-    used.map((s) => `<option value="${esc(s)}">${esc(s)}</option>`).join("");
+    used.map((s) => html`<option value="${s}">${s}</option>`).join("");
   els.storeFilter.value = used.includes(prevFilter) ? prevFilter : "";
   state.filterStore = els.storeFilter.value;
 
@@ -136,7 +136,7 @@ function renderActiveItems(active) {
   return keys
     .map(
       (k) =>
-        `<li class="group-head">${esc(k)} <span class="count">${groups[k].length}</span></li>` +
+        html`<li class="group-head">${k} <span class="count">${groups[k].length}</span></li>` +
         groups[k].map(renderItem).join("")
     )
     .join("");
@@ -147,22 +147,22 @@ function renderItem(item) {
   const stores = sortStores(getStores(item));
   let storeText;
   if (stores.length === 0) {
-    storeText = `<span class="meta-empty">bez dućana</span>`;
+    storeText = html`<span class="meta-empty">bez dućana</span>`;
   } else {
-    const shown = stores.slice(0, 2).map(esc).join(", ");
+    const shown = stores.slice(0, 2).join(", ");
     const extra = stores.length > 2 ? ` +${stores.length - 2}` : "";
-    storeText = `${icon("pin")} ${shown}${extra}`;
+    storeText = html`${icon("pin")} ${shown}${extra}`;
   }
   const meta = [storeText];
-  if (item.category) meta.push(`<span class="cat-tag">${esc(item.category)}</span>`);
+  if (item.category) meta.push(html`<span class="cat-tag">${item.category}</span>`);
   const priceTxt = item.bought ? fmtPrice(item.price) : null;
-  if (priceTxt) meta.push(`${icon("tag")} ${priceTxt}`);
-  if (item.added_by) meta.push(`${icon("user")} ${esc(item.added_by)}`);
-  if (item.recurring) meta.push(`${icon("refresh")} ponavlja se`);
+  if (priceTxt) meta.push(html`${icon("tag")} ${priceTxt}`);
+  if (item.added_by) meta.push(html`${icon("user")} ${item.added_by}`);
+  if (item.recurring) meta.push(html`${icon("refresh")} ponavlja se`);
 
-  const qtyTag = item.qty ? `<span class="qty-tag">×${esc(item.qty)}</span>` : "";
+  const qtyTag = item.qty ? html`<span class="qty-tag">×${item.qty}</span>` : "";
 
-  return `
+  return html`
     <li class="item swipeable ${item.bought ? "done" : ""} ${item.urgent ? "urgent" : ""}" data-id="${item.id}">
       <div class="item-bg"><span class="item-bg-icon">${icon("trash")} Obriši</span></div>
       <div class="item-inner">
@@ -173,10 +173,10 @@ function renderItem(item) {
           <div class="item-row1">
             <button class="star-btn ${item.urgent ? "on" : ""}" data-act="star" data-id="${item.id}" aria-label="Hitno">${icon("star")}</button>
             <button class="recur-btn ${item.recurring ? "on" : ""}" data-act="recur" data-id="${item.id}" aria-label="Ponavljajuća stavka">${icon("refresh")}</button>
-            <span class="item-name">${esc(item.name)}</span>
+            <span class="item-name">${item.name}</span>
             ${qtyTag}
           </div>
-          <div class="item-meta">${meta.join(" · ")}</div>
+          <div class="item-meta">${raw(meta.join(" · "))}</div>
         </div>
         <button class="btn-del" data-act="del" data-id="${item.id}" aria-label="Obriši">×</button>
       </div>
@@ -195,8 +195,8 @@ function renderQuickAdd() {
   els.quickAdd.innerHTML = top
     .map(
       (s) =>
-        `<button class="chip" data-act="quick" data-name="${esc(s.name)}" data-store="${esc(s.lastStore || "")}">
-           ${esc(s.name)}${s.lastStore ? ` <span class="chip-store">${esc(s.lastStore)}</span>` : ""}
+        html`<button class="chip" data-act="quick" data-name="${s.name}" data-store="${s.lastStore || ""}">
+           ${s.name}${s.lastStore ? html` <span class="chip-store">${s.lastStore}</span>` : ""}
          </button>`
     )
     .join("");
@@ -234,10 +234,10 @@ function renderSummary(active) {
   }
 
   const M = active.length;
-  let html = `<div class="summary-row">${icon("tag")} Procjena košarice: <strong>~${estTotal.toFixed(2)} €</strong> <span class="muted">(${estKnown}/${M} s cijenom)</span></div>`;
+  let out = html`<div class="summary-row">${icon("tag")} Procjena košarice: <strong>~${estTotal.toFixed(2)} €</strong> <span class="muted">(${estKnown}/${M} s cijenom)</span></div>`;
   if (best) {
-    html += `<div class="summary-row">${icon("bag")} Najpovoljnije na jednom mjestu: <strong>${esc(best.store)}</strong> ~${best.total.toFixed(2)} € <span class="muted">(${best.covered}/${M})</span></div>`;
+    out += html`<div class="summary-row">${icon("bag")} Najpovoljnije na jednom mjestu: <strong>${best.store}</strong> ~${best.total.toFixed(2)} € <span class="muted">(${best.covered}/${M})</span></div>`;
   }
-  els.listSummary.innerHTML = html;
+  els.listSummary.innerHTML = out;
   els.listSummary.classList.remove("hidden");
 }

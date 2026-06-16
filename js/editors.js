@@ -3,107 +3,122 @@
 import { state } from "./state.js";
 import { els } from "./dom.js";
 import {
-  parseQty, unitChipsHTML, getStores, sortStores, catChipsHTML,
-  parsePrice, buildQty, msToDateInput, dateInputToMs, setSync, toast, esc,
+  html, parseQty, unitChipsHTML, getStores, sortStores, catChipsHTML,
+  parsePrice, buildQty, msToDateInput, dateInputToMs, setSync, toast,
 } from "./util.js";
 import { db, doc, updateDoc } from "./firebase.js";
 
-// ── Prolazno stanje editora ────────────────────────────────────
-export const edit = { id: null, unit: "kom", category: "" };
-export const editStores = new Set();
-export const hist = { id: null, unit: "kom", store: "", category: "" };
+// ── Generički editor bottom-sheeta ──────────────────────────────
+// Stavke imaju više dućana (multiStore) i nemaju datum; zapisi povijesti
+// imaju jedan dućan i polje datuma. Sve ostalo (naziv/količina/kategorija/
+// cijena, otvaranje/spremanje/zatvaranje) je identično pa je generalizirano
+// jednom fabrikom umjesto dupliciranja po dva seta funkcija.
+function createEditor({ collection, multiStore, storeAct, catAct, unitAct, findRecord, fields }) {
+  const ed = { id: null, unit: "kom", category: "", store: "" };
+  const stores = new Set();
 
-// ── Editor stavke (jedan bottom-sheet za sve) ──────────────────
-export function openEditSheet(id) {
-  const item = state.items.find((i) => i.id === id);
-  if (!item) return;
-  edit.id = id;
-  els.editName.value = item.name;
-  const { value, unit } = parseQty(item.qty || "");
-  edit.unit = unit;
-  els.editQtyValue.value = value;
-  els.editQtyUnits.innerHTML = unitChipsHTML(edit.unit, "edit-qty-unit");
-  editStores.clear();
-  getStores(item).forEach((s) => editStores.add(s));
-  renderEditStores();
-  edit.category = state.CATEGORIES.includes(item.category) ? item.category : "";
-  renderEditCats();
-  els.editPrice.value = item.price != null ? String(item.price) : "";
-  els.editSheet.classList.remove("hidden");
-}
-export function renderEditStores() {
-  els.editStores.innerHTML = state.STORES
-    .map((s) => `<button type="button" class="store-chip ${editStores.has(s) ? "selected" : ""}" data-act="edit-store" data-store="${esc(s)}">${esc(s)}</button>`)
-    .join("");
-}
-export function renderEditCats() {
-  els.editCats.innerHTML = catChipsHTML(edit.category, "edit-cat");
-}
-export function closeEditSheet() {
-  els.editSheet.classList.add("hidden");
-  edit.id = null;
-}
-export async function saveEdit() {
-  if (!edit.id) return;
-  const name = els.editName.value.trim();
-  if (!name) { toast("Naziv ne može biti prazan"); return; }
-  try {
-    await updateDoc(doc(db, "items", edit.id), {
+  function renderStores() {
+    fields.stores.innerHTML = state.STORES
+      .map((s) => {
+        const selected = multiStore ? stores.has(s) : s === ed.store;
+        return html`<button type="button" class="store-chip ${selected ? "selected" : ""}" data-act="${storeAct}" data-store="${s}">${s}</button>`;
+      })
+      .join("");
+  }
+  function renderCats() {
+    fields.cats.innerHTML = catChipsHTML(ed.category, catAct);
+  }
+  function toggleStore(store) {
+    if (multiStore) stores.has(store) ? stores.delete(store) : stores.add(store);
+    else ed.store = ed.store === store ? "" : store;
+    renderStores();
+  }
+  function toggleCat(cat) {
+    ed.category = ed.category === cat ? "" : cat;
+    renderCats();
+  }
+  function toggleUnit(unit) {
+    ed.unit = ed.unit === unit ? "" : unit;
+    fields.qtyUnits.innerHTML = unitChipsHTML(ed.unit, unitAct);
+  }
+  function open(id) {
+    const record = findRecord(id);
+    if (!record) return;
+    ed.id = id;
+    fields.name.value = record.name;
+    const { value, unit } = parseQty(record.qty || "");
+    ed.unit = unit;
+    fields.qtyValue.value = value;
+    fields.qtyUnits.innerHTML = unitChipsHTML(ed.unit, unitAct);
+    if (multiStore) {
+      stores.clear();
+      getStores(record).forEach((s) => stores.add(s));
+    } else {
+      ed.store = record.store || "";
+    }
+    renderStores();
+    ed.category = state.CATEGORIES.includes(record.category) ? record.category : "";
+    renderCats();
+    fields.price.value = record.price != null ? String(record.price) : "";
+    if (fields.date) fields.date.value = msToDateInput(record.purchased_at);
+    fields.sheet.classList.remove("hidden");
+  }
+  function close() {
+    fields.sheet.classList.add("hidden");
+    ed.id = null;
+  }
+  async function save() {
+    if (!ed.id) return;
+    const name = fields.name.value.trim();
+    if (!name) { toast("Naziv ne može biti prazan"); return; }
+    const data = {
       name,
-      qty: buildQty(els.editQtyValue.value, edit.unit) || null,
-      stores: sortStores([...editStores]),
-      store: null,
-      category: edit.category || null,
-      price: parsePrice(els.editPrice.value),
-    });
-    closeEditSheet();
-  } catch (e) { console.error(e); setSync(false); }
+      qty: buildQty(fields.qtyValue.value, ed.unit) || null,
+      category: ed.category || null,
+      price: parsePrice(fields.price.value),
+    };
+    if (multiStore) {
+      data.stores = sortStores([...stores]);
+      data.store = null;
+    } else {
+      data.store = ed.store || null;
+    }
+    if (fields.date) {
+      const record = findRecord(ed.id);
+      data.purchased_at = dateInputToMs(fields.date.value, record ? record.purchased_at : Date.now());
+    }
+    try {
+      await updateDoc(doc(db, collection, ed.id), data);
+      close();
+    } catch (e) { console.error(e); setSync(false); }
+  }
+
+  return { open, close, save, renderStores, renderCats, toggleStore, toggleCat, toggleUnit };
 }
 
-// ── Editor zapisa povijesti ────────────────────────────────────
-export function openHistSheet(id) {
-  const p = state.purchases.find((x) => x.id === id);
-  if (!p) return;
-  hist.id = id;
-  els.histName.value = p.name;
-  const { value, unit } = parseQty(p.qty || "");
-  hist.unit = unit;
-  els.histQtyValue.value = value;
-  els.histQtyUnits.innerHTML = unitChipsHTML(hist.unit, "hist-qty-unit");
-  hist.store = p.store || "";
-  renderHistStores();
-  hist.category = state.CATEGORIES.includes(p.category) ? p.category : "";
-  renderHistCats();
-  els.histPrice.value = p.price != null ? String(p.price) : "";
-  els.histDate.value = msToDateInput(p.purchased_at);
-  els.histSheet.classList.remove("hidden");
-}
-export function renderHistStores() {
-  els.histStores.innerHTML = state.STORES
-    .map((s) => `<button type="button" class="store-chip ${s === hist.store ? "selected" : ""}" data-act="hist-store" data-store="${esc(s)}">${esc(s)}</button>`)
-    .join("");
-}
-export function renderHistCats() {
-  els.histCats.innerHTML = catChipsHTML(hist.category, "hist-cat");
-}
-export function closeHistSheet() {
-  els.histSheet.classList.add("hidden");
-  hist.id = null;
-}
-export async function saveHist() {
-  if (!hist.id) return;
-  const name = els.histName.value.trim();
-  if (!name) { toast("Naziv ne može biti prazan"); return; }
-  const p = state.purchases.find((x) => x.id === hist.id);
-  try {
-    await updateDoc(doc(db, "purchases", hist.id), {
-      name,
-      qty: buildQty(els.histQtyValue.value, hist.unit) || null,
-      store: hist.store || null,
-      category: hist.category || null,
-      price: parsePrice(els.histPrice.value),
-      purchased_at: dateInputToMs(els.histDate.value, p ? p.purchased_at : Date.now()),
-    });
-    closeHistSheet();
-  } catch (e) { console.error(e); setSync(false); }
-}
+export const itemEditor = createEditor({
+  collection: "items",
+  multiStore: true,
+  storeAct: "edit-store",
+  catAct: "edit-cat",
+  unitAct: "edit-qty-unit",
+  findRecord: (id) => state.items.find((i) => i.id === id),
+  fields: {
+    name: els.editName, qtyValue: els.editQtyValue, qtyUnits: els.editQtyUnits,
+    stores: els.editStores, cats: els.editCats, price: els.editPrice, sheet: els.editSheet,
+  },
+});
+
+export const histEditor = createEditor({
+  collection: "purchases",
+  multiStore: false,
+  storeAct: "hist-store",
+  catAct: "hist-cat",
+  unitAct: "hist-qty-unit",
+  findRecord: (id) => state.purchases.find((p) => p.id === id),
+  fields: {
+    name: els.histName, qtyValue: els.histQtyValue, qtyUnits: els.histQtyUnits,
+    stores: els.histStores, cats: els.histCats, price: els.histPrice, sheet: els.histSheet,
+    date: els.histDate,
+  },
+});

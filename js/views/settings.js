@@ -2,7 +2,7 @@
 
 import { state } from "../state.js";
 import { els } from "../dom.js";
-import { esc, toast, setSync } from "../util.js";
+import { html, toast, setSync } from "../util.js";
 import { currentThemeChoice, currentAccent } from "../theme.js";
 import { settingsDoc, setDoc } from "../firebase.js";
 
@@ -24,14 +24,14 @@ export function renderSettings() {
   // Dućani
   els.settingsStores.innerHTML = state.STORES.map(
     (s) =>
-      `<li class="item"><div class="item-body"><div class="item-name">${esc(s)}</div></div>
-         <button class="btn-del" data-act="store-del" data-store="${esc(s)}" aria-label="Obriši">×</button></li>`
+      html`<li class="item"><div class="item-body"><div class="item-name">${s}</div></div>
+         <button class="btn-del" data-act="store-del" data-store="${s}" aria-label="Obriši">×</button></li>`
   ).join("");
   // Kategorije
   els.settingsCats.innerHTML = state.CATEGORIES.map(
     (c) =>
-      `<li class="item"><div class="item-body"><div class="item-name">${esc(c)}</div></div>
-         <button class="btn-del" data-act="cat-del" data-cat="${esc(c)}" aria-label="Obriši">×</button></li>`
+      html`<li class="item"><div class="item-body"><div class="item-name">${c}</div></div>
+         <button class="btn-del" data-act="cat-del" data-cat="${c}" aria-label="Obriši">×</button></li>`
   ).join("");
   // Ime — kad je spremljeno, polje je zaključano, a gumb piše "Uredi"
   els.nameInput.value = state.userName;

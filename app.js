@@ -5,7 +5,7 @@ import { APP_VERSION, state, setState, subscribe, DEFAULT_STORES, DEFAULT_CATEGO
 import { els } from "./js/dom.js";
 import { configured, itemsCol, purchasesCol, settingsDoc, onSnapshot } from "./js/firebase.js";
 import { setThemeChoice, setAccent } from "./js/theme.js";
-import { setSync, buildQty, sortStores, unitChipsHTML, toast } from "./js/util.js";
+import { setSync, buildQty, sortStores, toast } from "./js/util.js";
 import { render } from "./js/render.js";
 import {
   newStores, addForm, initAddQty, renderAddUnits, renderStorePicker,
@@ -14,10 +14,7 @@ import {
 import {
   renderSettings, settingsState, addStore, addCategory, removeStore, removeCategory,
 } from "./js/views/settings.js";
-import {
-  openEditSheet, editStores, renderEditStores, renderEditCats, edit, saveEdit, closeEditSheet,
-  openHistSheet, hist, renderHistStores, renderHistCats, saveHist, closeHistSheet,
-} from "./js/editors.js";
+import { itemEditor, histEditor } from "./js/editors.js";
 import {
   addItem, toggleBought, toggleStar, toggleRecurring, deleteItem, deleteHistory, repeatTrip,
   quickAdd, openArchiveModal, closeArchiveModal, confirmArchive,
@@ -75,24 +72,12 @@ if (configured) {
     if (act === "toggle") toggleBought(id);
     else if (act === "star") toggleStar(id);
     else if (act === "recur") toggleRecurring(id);
-    else if (act === "edit-item") openEditSheet(id);
-    else if (act === "edit-store") {
-      editStores.has(store) ? editStores.delete(store) : editStores.add(store);
-      renderEditStores();
-    }
-    else if (act === "edit-qty-unit") {
-      edit.unit = edit.unit === btn.dataset.unit ? "" : btn.dataset.unit;
-      els.editQtyUnits.innerHTML = unitChipsHTML(edit.unit, "edit-qty-unit");
-    }
-    else if (act === "edit-hist") openHistSheet(id);
-    else if (act === "hist-store") {
-      hist.store = hist.store === btn.dataset.store ? "" : btn.dataset.store;
-      renderHistStores();
-    }
-    else if (act === "hist-qty-unit") {
-      hist.unit = hist.unit === btn.dataset.unit ? "" : btn.dataset.unit;
-      els.histQtyUnits.innerHTML = unitChipsHTML(hist.unit, "hist-qty-unit");
-    }
+    else if (act === "edit-item") itemEditor.open(id);
+    else if (act === "edit-store") itemEditor.toggleStore(store);
+    else if (act === "edit-qty-unit") itemEditor.toggleUnit(btn.dataset.unit);
+    else if (act === "edit-hist") histEditor.open(id);
+    else if (act === "hist-store") histEditor.toggleStore(store);
+    else if (act === "hist-qty-unit") histEditor.toggleUnit(btn.dataset.unit);
     else if (act === "toggle-new-store") {
       addForm.storesTouched = true;
       newStores.has(store) ? newStores.delete(store) : newStores.add(store);
@@ -103,14 +88,8 @@ if (configured) {
       addForm.category = addForm.category === btn.dataset.cat ? "" : btn.dataset.cat;
       renderCatPicker();
     }
-    else if (act === "edit-cat") {
-      edit.category = edit.category === btn.dataset.cat ? "" : btn.dataset.cat;
-      renderEditCats();
-    }
-    else if (act === "hist-cat") {
-      hist.category = hist.category === btn.dataset.cat ? "" : btn.dataset.cat;
-      renderHistCats();
-    }
+    else if (act === "edit-cat") itemEditor.toggleCat(btn.dataset.cat);
+    else if (act === "hist-cat") histEditor.toggleCat(btn.dataset.cat);
     else if (act === "archive-store") {
       const row = btn.closest(".archive-row");
       const was = btn.classList.contains("selected");
@@ -224,17 +203,17 @@ if (configured) {
   els.detailsToggle.addEventListener("click", () => els.addDetails.classList.toggle("hidden"));
 
   // Editor stavke
-  els.editSave.addEventListener("click", saveEdit);
-  els.editCancel.addEventListener("click", closeEditSheet);
+  els.editSave.addEventListener("click", itemEditor.save);
+  els.editCancel.addEventListener("click", itemEditor.close);
   els.editSheet.addEventListener("click", (e) => {
-    if (e.target === els.editSheet) closeEditSheet();
+    if (e.target === els.editSheet) itemEditor.close();
   });
 
   // Editor zapisa povijesti
-  els.histSave.addEventListener("click", saveHist);
-  els.histCancel.addEventListener("click", closeHistSheet);
+  els.histSave.addEventListener("click", histEditor.save);
+  els.histCancel.addEventListener("click", histEditor.close);
   els.histSheet.addEventListener("click", (e) => {
-    if (e.target === els.histSheet) closeHistSheet();
+    if (e.target === els.histSheet) histEditor.close();
   });
 
   els.micBtn.addEventListener("click", toggleVoice);

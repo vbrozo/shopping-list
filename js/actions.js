@@ -4,7 +4,7 @@ import { state } from "./state.js";
 import { els } from "./dom.js";
 import {
   usualStoresFor, usualCategoryFor, sortStores, getStores, parsePrice,
-  newTripId, tripKeyOf, toast, haptic, setSync, normKey, esc,
+  newTripId, tripKeyOf, toast, haptic, setSync, normKey, html, raw,
 } from "./util.js";
 import {
   db, itemsCol, purchasesCol, addDoc, updateDoc, deleteDoc, doc, writeBatch,
@@ -87,14 +87,14 @@ export function openArchiveModal() {
       const primary = sortStores(getStores(it))[0] || "";
       const chips = state.STORES.map(
         (s) =>
-          `<button type="button" class="store-chip ${s === primary ? "selected" : ""}"
-             data-act="archive-store" data-store="${esc(s)}">${esc(s)}</button>`
+          html`<button type="button" class="store-chip ${s === primary ? "selected" : ""}"
+             data-act="archive-store" data-store="${s}">${s}</button>`
       ).join("");
-      const priceVal = it.price != null ? esc(String(it.price)) : "";
-      return `
+      const priceVal = it.price != null ? String(it.price) : "";
+      return html`
         <div class="archive-row" data-id="${it.id}">
-          <div class="item-name">${esc(it.name)}${it.qty ? ` ×${esc(it.qty)}` : ""}</div>
-          <div class="store-picker single">${chips}</div>
+          <div class="item-name">${it.name}${it.qty ? html` ×${it.qty}` : ""}</div>
+          <div class="store-picker single">${raw(chips)}</div>
           <input class="archive-price" type="text" inputmode="decimal"
                  placeholder="cijena (npr. 1,99)" value="${priceVal}" />
         </div>`;

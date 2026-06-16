@@ -1,0 +1,178 @@
+/* Dijalozi: arhiviranje, skeniranje računa, toast */
+/* Dijalog za spremanje u povijest */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+  padding: 0;
+}
+.modal-card {
+  background: var(--bg);
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+}
+@media (min-width: 560px) {
+  .modal { align-items: center; }
+  .modal-card { border-radius: var(--radius); }
+}
+.modal-card h2 { margin: 0 0 4px; }
+
+.archive-row {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.archive-row .item-name {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.store-picker.single {
+  margin-bottom: 8px;
+}
+.archive-price, .sheet-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 1rem;
+  background: var(--card);
+  color: var(--text);
+}
+.sheet-input { margin: 6px 0 4px; }
+.sheet-input:focus, .archive-price:focus { outline: none; border-color: var(--green); }
+
+/* Skeniranje računa */
+.scan-actions { display: flex; gap: 8px; margin-bottom: 12px; }
+.scan-actions .scan-btn { flex: 1; margin-bottom: 0; justify-content: center; }
+.receipt-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+.receipt-row .rr-name {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: var(--bg);
+  color: var(--text);
+}
+.receipt-row .rr-nums {
+  display: flex;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.receipt-row .rr-qty { width: 64px; }
+.receipt-row .rr-price { width: 78px; }
+.receipt-row .rr-qty,
+.receipt-row .rr-price {
+  padding: 9px 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: var(--bg);
+  color: var(--text);
+  text-align: right;
+}
+.receipt-row .rr-name:focus,
+.receipt-row .rr-qty:focus,
+.receipt-row .rr-price:focus { outline: none; border-color: var(--green); }
+.receipt-row.recognized { border-left: 3px solid var(--green); }
+.receipt-row .rr-del {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--text);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.receipt-raw-wrap { margin: 4px 0 10px; font-size: 0.85rem; color: var(--muted); }
+.receipt-raw-wrap summary { cursor: pointer; }
+.receipt-raw-wrap pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+}
+.modal-actions .btn-add {
+  flex: 1;
+}
+.modal-actions .btn-text {
+  color: var(--muted);
+}
+
+/* Toast obavijest */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  transform: translateX(-50%) translateY(20px);
+  background: #323232;
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 200;
+  max-width: 90vw;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.toast-action {
+  background: none;
+  border: none;
+  color: #8bc34a;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 6px 8px;
+}
+/* toast je pointer-events:none; gumb mora biti klikabilan, ali samo dok je prikazan */
+.toast.show .toast-action { pointer-events: auto; }
+

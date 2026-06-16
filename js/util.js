@@ -2,13 +2,11 @@
 
 import { state, QTY_UNITS } from "./state.js";
 import { els } from "./dom.js";
+import { esc, html, raw } from "./html.js";
+
+export { esc, html, raw };
 
 // ── Pomoćne ────────────────────────────────────────────────────
-export function esc(s) {
-  return String(s).replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
-  );
-}
 export function setSync(ok) {
   els.syncDot.className = "sync-dot " + (ok ? "online" : "offline");
 }
@@ -150,7 +148,7 @@ export function extractStores(phrase) {
 // ── Toast (s opcionalnom akcijom, npr. Poništi) ────────────────
 let toastTimer = null;
 export function toast(msg, actionLabel, actionFn) {
-  els.toast.innerHTML = `<span>${esc(msg)}</span>`;
+  els.toast.innerHTML = html`<span>${msg}</span>`;
   if (actionLabel) {
     const b = document.createElement("button");
     b.className = "toast-action";
@@ -169,7 +167,7 @@ export function toast(msg, actionLabel, actionFn) {
 // ── Kontrola količine (slobodan broj + jedinice kom/kg/g/l) ────
 export function unitChipsHTML(selected, act) {
   return QTY_UNITS
-    .map((u) => `<button type="button" class="unit-chip ${u === selected ? "selected" : ""}" data-act="${act}" data-unit="${esc(u)}">${esc(u)}</button>`)
+    .map((u) => html`<button type="button" class="unit-chip ${u === selected ? "selected" : ""}" data-act="${act}" data-unit="${u}">${u}</button>`)
     .join("");
 }
 export function buildQty(value, unit) {
@@ -191,8 +189,8 @@ export function parseQty(s) {
 export function catChipsHTML(selected, act) {
   return state.CATEGORIES.map(
     (c) =>
-      `<button type="button" class="store-chip ${c === selected ? "selected" : ""}"
-         data-act="${act}" data-cat="${esc(c)}">${esc(c)}</button>`
+      html`<button type="button" class="store-chip ${c === selected ? "selected" : ""}"
+         data-act="${act}" data-cat="${c}">${c}</button>`
   ).join("");
 }
 

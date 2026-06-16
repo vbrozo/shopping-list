@@ -1,0 +1,209 @@
+/* Forma za dodavanje, prijedlozi, količina */
+.add-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.add-input-wrap {
+  position: relative;
+  flex: 1 1 100%;
+}
+.input-row {
+  display: flex;
+  gap: 8px;
+}
+
+/* Vlastiti prijedlozi pri tipkanju */
+.suggest-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 30;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  max-height: 240px;
+  overflow-y: auto;
+}
+.suggest-item {
+  padding: 12px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.suggest-item:active { background: #e8f5e9; }
+.add-form input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 0; /* dopusti rast od nule, da gumbi ne prožderu širinu */
+  padding: 14px;
+  font-size: 1.05rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--text);
+}
+.add-form input:focus {
+  outline: none;
+  border-color: var(--green);
+}
+
+.btn-mic {
+  flex: 0 0 46px;
+  width: 46px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+.btn-mic:active { background: #e8f5e9; }
+.btn-mic.listening {
+  background: var(--green);
+  border-color: var(--green);
+  animation: pulse 1.1s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(46, 125, 50, 0); }
+}
+.btn-add {
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--green);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.btn-add:active { background: var(--green-dark); }
+/* Kompaktni "➕" u redu za unos */
+.input-row .btn-add {
+  flex: 0 0 46px;
+  width: 46px;
+  padding: 0;
+  font-size: 1.15rem;
+}
+
+/* Otkrivanje detalja (dućan / količina) */
+.details-toggle {
+  margin-top: 8px;
+  background: none;
+  border: none;
+  color: var(--green-dark);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 6px 2px;
+  text-align: left;
+}
+.add-details {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Količina: dropdown + jedinice */
+.qty-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.qty-select,
+.qty-num {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 1rem;
+  min-width: 80px;
+}
+.qty-num {
+  width: 96px;
+  flex: 0 0 auto;
+}
+.qty-num:focus { outline: none; border-color: var(--green); }
+.qty-units {
+  display: flex;
+  gap: 6px;
+}
+.unit-chip {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.unit-chip.selected {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Neutralni gumb "Spremi u povijest" (nije destruktivno) */
+.btn-save {
+  background: #e8f5e9;
+  border: 1px solid var(--green);
+  color: var(--green-dark);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.btn-save:active { background: #c8e6c9; }
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.toolbar select {
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 0.9rem;
+}
+.btn-toggle {
+  margin-left: auto;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.btn-toggle.active {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+.qty-input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  flex: 1 1 100%;
+}
+.qty-input:focus { outline: none; border-color: var(--green); }
+

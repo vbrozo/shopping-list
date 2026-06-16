@@ -2,12 +2,12 @@
 
 import { state } from "../state.js";
 import { els, icon } from "../dom.js";
-import { esc, aggregateByName, normKey, tripKeyOf, fmtDate, fmtPrice } from "../util.js";
+import { html, raw, aggregateByName, normKey, tripKeyOf, fmtDate, fmtPrice } from "../util.js";
 
 // Jedna kartica u "Cijene po artiklu" (usporedba cijena po dućanu)
 function priceStatHTML(s) {
   if (s.prices.length === 0) {
-    return `<li class="item"><div class="item-body"><div class="item-name">${esc(s.name)}</div>
+    return html`<li class="item"><div class="item-body"><div class="item-name">${s.name}</div>
             <div class="muted-line">još bez cijene · ${s.count}× kupljeno</div></div></li>`;
   }
   const entries = Object.entries(s.perStore).sort((a, b) => a[1].min - b[1].min);
@@ -15,15 +15,15 @@ function priceStatHTML(s) {
   const rows = entries
     .map(([st, ps]) => {
       const extra = ps.count > 1 ? ` <small>(min ${ps.min.toFixed(2)})</small>` : "";
-      return `<div class="price-row ${st === cheapest ? "cheapest" : ""}">
-                <span>${st === cheapest ? icon("star") + " " : ""}${esc(st)}</span>
+      return html`<div class="price-row ${st === cheapest ? "cheapest" : ""}">
+                <span>${st === cheapest ? raw(icon("star") + " ") : ""}${st}</span>
                 <span>${ps.last.toFixed(2)} €${extra}</span>
               </div>`;
     })
     .join("");
-  return `<li class="item col"><div class="item-body">
-            <div class="item-name">${esc(s.name)}</div>
-            <div class="price-table">${rows}</div>
+  return html`<li class="item col"><div class="item-body">
+            <div class="item-name">${s.name}</div>
+            <div class="price-table">${raw(rows)}</div>
           </div></li>`;
 }
 
@@ -50,7 +50,7 @@ export function renderHistory() {
     els.priceList.innerHTML = keys
       .map(
         (k) =>
-          `<li class="group-head">${esc(k)} <span class="count">${buckets[k].length}</span></li>` +
+          html`<li class="group-head">${k} <span class="count">${buckets[k].length}</span></li>` +
           buckets[k].map(priceStatHTML).join("")
       )
       .join("");
@@ -82,38 +82,38 @@ export function renderHistory() {
       const sum = trip.items.reduce((s, p) => s + (typeof p.price === "number" ? p.price : 0), 0);
       const collapsed = state.collapsedTrips.has(trip.key);
       const headParts = [fmtDate(trip.maxAt)];
-      if (stores.length) headParts.push(`${icon("pin")} ${esc(stores.join(", "))}`);
+      if (stores.length) headParts.push(html`${icon("pin")} ${stores.join(", ")}`);
       headParts.push(`${trip.items.length} ${trip.items.length === 1 ? "stavka" : "stavke"}`);
-      if (sum > 0) headParts.push(`${icon("tag")} ${sum.toFixed(2)} €`);
+      if (sum > 0) headParts.push(html`${icon("tag")} ${sum.toFixed(2)} €`);
 
       const rows = trip.items
         .map((p) => {
           const parts = [];
-          if (p.store && stores.length > 1) parts.push(`${icon("pin")} ${esc(p.store)}`);
+          if (p.store && stores.length > 1) parts.push(html`${icon("pin")} ${p.store}`);
           const priceTxt = fmtPrice(p.price);
-          if (priceTxt) parts.push(`${icon("tag")} ${priceTxt}`);
-          if (p.bought_by) parts.push(`${icon("user")} ${esc(p.bought_by)}`);
+          if (priceTxt) parts.push(html`${icon("tag")} ${priceTxt}`);
+          if (p.bought_by) parts.push(html`${icon("user")} ${p.bought_by}`);
           const showReceipt = p.receipt_name && normKey(p.receipt_name) !== normKey(p.name);
-          return `<li class="item">
+          return html`<li class="item">
                     <div class="item-main" data-act="edit-hist" data-id="${p.id}">
-                      <div class="item-name">${esc(p.name)}${p.qty ? ` ×${esc(p.qty)}` : ""}</div>
-                      ${parts.length ? `<div class="muted-line">${parts.join(" · ")}</div>` : ""}
-                      ${showReceipt ? `<div class="muted-line tiny">${icon("tag")} na računu: ${esc(p.receipt_name)}</div>` : ""}
+                      <div class="item-name">${p.name}${p.qty ? html` ×${p.qty}` : ""}</div>
+                      ${parts.length ? html`<div class="muted-line">${raw(parts.join(" · "))}</div>` : ""}
+                      ${showReceipt ? html`<div class="muted-line tiny">${icon("tag")} na računu: ${p.receipt_name}</div>` : ""}
                     </div>
                     <button class="btn-del" data-act="del-hist" data-id="${p.id}" aria-label="Obriši">×</button>
                   </li>`;
         })
         .join("");
 
-      return `<li class="trip-group ${collapsed ? "collapsed" : ""}">
+      return html`<li class="trip-group ${collapsed ? "collapsed" : ""}">
                 <div class="trip-header">
-                  <div class="trip-header-main" data-act="toggle-trip" data-trip="${esc(trip.key)}">
-                    <div class="muted-line">${headParts.join(" · ")}</div>
+                  <div class="trip-header-main" data-act="toggle-trip" data-trip="${trip.key}">
+                    <div class="muted-line">${raw(headParts.join(" · "))}</div>
                   </div>
-                  <button type="button" class="btn-repeat" data-act="repeat-trip" data-trip="${esc(trip.key)}" aria-label="Ponovi kupovinu">${icon("refresh")} Ponovi</button>
-                  <span class="trip-chevron" data-act="toggle-trip" data-trip="${esc(trip.key)}">${icon("chevron")}</span>
+                  <button type="button" class="btn-repeat" data-act="repeat-trip" data-trip="${trip.key}" aria-label="Ponovi kupovinu">${icon("refresh")} Ponovi</button>
+                  <span class="trip-chevron" data-act="toggle-trip" data-trip="${trip.key}">${icon("chevron")}</span>
                 </div>
-                <ul class="list trip-items">${rows}</ul>
+                <ul class="list trip-items">${raw(rows)}</ul>
               </li>`;
     })
     .join("");

@@ -1,0 +1,108 @@
+/* Zaglavlje, kontejner, obavijest, podnožje */
+.app-header {
+  background: var(--green);
+  color: #fff;
+  padding: 16px 16px calc(16px + env(safe-area-inset-top));
+  padding-top: max(16px, env(safe-area-inset-top));
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow);
+}
+
+.app-header h1 {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.header-left h1 {
+  font-size: 1.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.btn-icon {
+  background: rgba(255, 255, 255, 0.18);
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.btn-icon:active { background: rgba(255, 255, 255, 0.35); }
+
+.sync-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #bbb;
+  flex-shrink: 0;
+}
+.sync-dot.online { background: #8bc34a; box-shadow: 0 0 6px #8bc34a; }
+.sync-dot.offline { background: #ff7043; }
+
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.notice {
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.notice h2 { margin-top: 0; }
+code {
+  background: rgba(0,0,0,0.06);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+
+/* Footer s tvrdim osvježavanjem + verzijom */
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 28px;
+  padding: 12px 0;
+}
+.btn-refresh {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.btn-refresh:active { background: var(--border); }
+.btn-refresh:disabled { opacity: 0.6; }
+.app-footer .ver {
+  font-size: 0.78rem;
+  color: var(--muted);
+}

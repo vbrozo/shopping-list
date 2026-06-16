@@ -1,0 +1,37 @@
+/* Monokromatske ikone */
+.icn {
+  width: 1.2em;
+  height: 1.2em;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: -0.22em;
+}
+/* zvjezdica (najjeftinije) — ispunjena */
+.price-row.cheapest .icn { fill: currentColor; stroke: none; }
+/* gumbi koji imaju ikonu + tekst */
+.app-header h1,
+.details-toggle,
+.btn-toggle,
+.btn-refresh,
+.btn-save,
+.seg-btn,
+.item-bg-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.seg-btn { justify-content: center; }
+/* gumbi samo s ikonom — centriraj */
+.btn-mic,
+.input-row .btn-add,
+.inline-form .btn-add {
+  display: grid;
+  place-items: center;
+}
+.btn-mic .icn,
+.input-row .btn-add .icn { width: 1.3em; height: 1.3em; vertical-align: 0; }
+

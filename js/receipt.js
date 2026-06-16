@@ -4,7 +4,7 @@ import { state } from "./state.js";
 import { els } from "./dom.js";
 import {
   deaccent, parsePrice, normKey, usualCategoryFor, msToDateInput,
-  dateInputToMs, newTripId, toast, setSync, esc,
+  dateInputToMs, newTripId, toast, setSync, html,
 } from "./util.js";
 import { db, purchasesCol, doc, writeBatch } from "./firebase.js";
 
@@ -197,8 +197,8 @@ function fillReceiptReview(parsed, rawText) {
   els.receiptRawWrap.classList.toggle("hidden", !rawText);
 
   els.receiptStores.innerHTML = state.STORES.map(
-    (s) => `<button type="button" class="store-chip ${s === parsed.store ? "selected" : ""}"
-       data-act="receipt-store" data-store="${esc(s)}">${esc(s)}</button>`
+    (s) => html`<button type="button" class="store-chip ${s === parsed.store ? "selected" : ""}"
+       data-act="receipt-store" data-store="${s}">${s}</button>`
   ).join("");
   els.receiptDate.value = msToDateInput(parsed.date || Date.now());
 
@@ -207,14 +207,14 @@ function fillReceiptReview(parsed, rawText) {
     const alias = aliases[normKey(r.name)];
     const display = alias ? alias.name : r.name;
     // data-raw čuva sirovi naziv s računa za učenje rječnika
-    return `
-    <div class="receipt-row ${alias ? "recognized" : ""}" data-i="${i}" data-raw="${esc(r.name)}">
+    return html`
+    <div class="receipt-row ${alias ? "recognized" : ""}" data-i="${i}" data-raw="${r.name}">
       <button type="button" class="rr-del" data-act="receipt-del" aria-label="Ukloni">×</button>
-      <input class="rr-name" type="text" value="${esc(display)}" aria-label="Naziv"
-             title="Na računu: ${esc(r.name)}" />
+      <input class="rr-name" type="text" value="${display}" aria-label="Naziv"
+             title="Na računu: ${r.name}" />
       <div class="rr-nums">
-        <input class="rr-qty" type="text" value="${esc(r.qty)}" placeholder="kol" aria-label="Količina" autocomplete="off" />
-        <input class="rr-price" type="text" inputmode="decimal" value="${esc(r.price)}" placeholder="cijena" aria-label="Cijena" />
+        <input class="rr-qty" type="text" value="${r.qty}" placeholder="kol" aria-label="Količina" autocomplete="off" />
+        <input class="rr-price" type="text" inputmode="decimal" value="${r.price}" placeholder="cijena" aria-label="Cijena" />
       </div>
     </div>`;
   }).join("");
