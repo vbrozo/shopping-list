@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "34";
+const APP_VERSION = "35";
 
 // ── Monokromatske ikone (currentColor — prate temu) ────────────
 const ICONS = {
@@ -1058,16 +1058,16 @@ function parseReceipt(text) {
   }
 
   // NB: ne uključuje "kartica" — Konzum maskirani broj kartice stoji na vrhu,
-  // prije stavki; plaćanje karticom na dnu ionako presretne "ukupno".
-  const STOP = /^(ukupno|p\s*pdv|pdv\b|osnovica|na[čc]in pla|gotovina|iznos\b)/i;
+  // prije stavki; plaćanje karticom na dnu ionako presretne "ukupno"/"za platiti".
+  const STOP = /^(ukupno|za\s*plat|p\s*pdv|pdv\b|osnovica|na[čc]in pla|gotovina|iznos\b)/i;
   const SKIP = /(popust|naknad|paketi|vre[ćc]ic|bonus|sli[čc]ic|rabat)/i;
   // Novčani iznos: 1–4 znamenke + 2 decimale (npr. 4,99). Ne hvata 0,5L (1 decimala).
   const PRICE = /\d{1,4}[.,]\d{2}(?!\d)/g;
 
   for (let raw of lines) {
     if (STOP.test(raw)) {
-      if (/ukupno/i.test(raw)) {
-        const m = raw.match(/ukupno\D*([\d.,]+\d)/i);
+      if (/ukupno|za\s*plat/i.test(raw)) {
+        const m = raw.match(/(?:ukupno|za\s*plat\w*)\D*([\d.,]+\d)/i);
         if (m) out.total = parsePrice(m[1]);
       }
       break; // stavke su iznad sažetka
@@ -1075,8 +1075,8 @@ function parseReceipt(text) {
     if (SKIP.test(raw)) continue;
     // Spoji razmaknute brojeve iz OCR-a ("2 , 09" → "2,09")
     const line = raw.replace(/(\d)\s*[.,]\s*(\d{2})(?!\d)/g, "$1,$2");
-    // Mora počinjati slovom (naziv artikla), inače je zaglavlje/šum
-    if (!/^[^0-9]*[a-zčćđšžA-ZČĆĐŠŽ]{2,}/.test(line)) continue;
+    // Mora sadržavati naziv artikla blizu početka (dopušta vodeću količinu, npr. "1 Kruh ...")
+    if (!/^[\d\s.,]*[a-zčćđšžA-ZČĆĐŠŽ]{2,}/.test(line)) continue;
 
     const prices = line.match(PRICE);
     if (!prices || !prices.length) continue;
@@ -1089,6 +1089,15 @@ function parseReceipt(text) {
     let name = line.slice(0, line.indexOf(prices[0])).replace(/[\s,.;:]+$/, "").trim();
 
     let qtyNum = iznos / cijena;
+    // Skini vodeću "Kol" na početku naziva (npr. "1 Kraš Život. carstv" → "Kraš Život. carstv")
+    const lead = name.match(/^(\d{1,3})\s+(?=[a-zčćđšžA-ZČĆĐŠŽ])/);
+    if (lead) {
+      const tok = parseInt(lead[1], 10);
+      if (tok > 0) {
+        name = name.slice(lead[0].length).trim();
+        if (Math.abs(tok - qtyNum) > 0.02) qtyNum = tok;
+      }
+    }
     // Skini "Kol" broj s kraja naziva ako odgovara izračunatoj količini
     // (dopušta i zaostali zarez iz OCR-a, npr. "... GL 2 1,")
     const tail = name.match(/\s+(\d{1,3}(?:[.,]\d{1,3})?)[.,]?\s*$/);
