@@ -32,7 +32,7 @@ radi **offline** (PWA) i hosta se besplatno na **GitHub Pages**. Sučelje je na 
 ### 💰 Povijest i cijene
 - **Cijena** na kupljenu stavku.
 - **„Spremi u povijest"** — dijalog gdje za svaku kupljenu stavku odabereš **dućan** i upišeš **cijenu**; arhivira se s datumom i imenom kupca.
-- **📷 Skeniranje računa (OCR)** — fotografiraš račun, a aplikacija pročita stavke i cijene **lokalno na uređaju** ([Tesseract.js](https://tesseract.projectnaptha.com), hrvatski model) — bez slanja slike igdje. Prepoznaje **dućan** iz zaglavlja, **datum** i svaku stavku (naziv · količina · cijena); količina se izvodi iz `iznos ÷ cijena` pa radi i za **vaganu robu** (kg) i **višekratnike**. Zbroj stavki se uspoređuje s „UKUPNO" na računu (✓/⚠). Sve je editabilno na **pregledu prije spremanja**.
+- **📷 Skeniranje računa (OCR)** — **slikaš račun** kamerom ili ga **učitaš iz galerije** (digitalni/spremljeni računi), a aplikacija pročita stavke i cijene **lokalno na uređaju** ([Tesseract.js](https://tesseract.projectnaptha.com), hrvatski model) — bez slanja slike igdje. Prepoznaje **dućan** iz zaglavlja, **datum** i svaku stavku (naziv · količina · cijena); količina se izvodi iz `iznos ÷ cijena` pa radi i za **vaganu robu** (kg) i **višekratnike**. Zbroj stavki se uspoređuje s „UKUPNO" na računu (✓/⚠). Sve je editabilno na **pregledu prije spremanja**.
 - **Cijene po artiklu** — usporedba cijena po dućanu za svaki artikl; najjeftiniji označen **★**.
 - **Pametno grupiranje naziva** — „Pom Bar – paprika", „Pom Bar paprika", „PomBar paprika" tretiraju se kao isti artikl (ignorira razmake, crtice, kvačice i velika/mala slova).
 - **Kronološka povijest** kupovina s **pretragom**; svaki zapis se može **urediti** (naziv, količina, dućan, cijena, datum) ili obrisati.

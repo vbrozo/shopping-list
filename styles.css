@@ -730,7 +730,8 @@ code {
 .sheet-input:focus, .archive-price:focus { outline: none; border-color: var(--green); }
 
 /* Skeniranje računa */
-.scan-btn { margin-bottom: 12px; }
+.scan-actions { display: flex; gap: 8px; margin-bottom: 12px; }
+.scan-actions .scan-btn { flex: 1; margin-bottom: 0; justify-content: center; }
 .receipt-row {
   display: flex;
   align-items: center;

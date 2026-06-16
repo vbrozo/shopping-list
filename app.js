@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "25";
+const APP_VERSION = "26";
 
 // ── Monokromatske ikone (currentColor — prate temu) ────────────
 const ICONS = {
@@ -123,7 +123,9 @@ const els = {
   archiveCancel: $("archive-cancel"),
   archiveConfirm: $("archive-confirm"),
   scanReceipt: $("scan-receipt"),
+  uploadReceipt: $("upload-receipt"),
   receiptFile: $("receipt-file"),
+  receiptGallery: $("receipt-gallery"),
   receiptModal: $("receipt-modal"),
   receiptStatus: $("receipt-status"),
   receiptReview: $("receipt-review"),
@@ -1322,13 +1324,16 @@ if (configured) {
     if (e.target === els.archiveModal) closeArchiveModal();
   });
 
-  // Skeniranje računa (OCR)
-  els.scanReceipt.addEventListener("click", () => els.receiptFile.click());
-  els.receiptFile.addEventListener("change", (e) => {
+  // Skeniranje računa (OCR) — kamera ili galerija
+  const onReceiptPicked = (e) => {
     const file = e.target.files && e.target.files[0];
     handleReceiptFile(file);
     e.target.value = ""; // dopusti ponovni odabir iste slike
-  });
+  };
+  els.scanReceipt.addEventListener("click", () => els.receiptFile.click());
+  els.uploadReceipt.addEventListener("click", () => els.receiptGallery.click());
+  els.receiptFile.addEventListener("change", onReceiptPicked);
+  els.receiptGallery.addEventListener("change", onReceiptPicked);
   els.receiptCancel.addEventListener("click", closeReceiptModal);
   els.receiptConfirm.addEventListener("click", confirmReceipt);
   els.receiptModal.addEventListener("click", (e) => {

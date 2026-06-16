@@ -16,12 +16,12 @@
     })();
   </script>
   <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icon-180.png?v=25" />
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=25" />
+  <link rel="apple-touch-icon" href="icon-180.png?v=26" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=26" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Lista" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="stylesheet" href="styles.css?v=25" />
+  <link rel="stylesheet" href="styles.css?v=26" />
 </head>
 <body>
   <header class="app-header">
@@ -109,8 +109,12 @@
 
     <!-- ══════════ PRIKAZ: POVIJEST ══════════ -->
     <div id="view-history" class="hidden">
-      <button id="scan-receipt" class="btn-save scan-btn" type="button"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9V5a2 2 0 0 1 2-2h4"></path><path d="M15 3h4a2 2 0 0 1 2 2v4"></path><path d="M21 15v4a2 2 0 0 1-2 2h-4"></path><path d="M9 21H5a2 2 0 0 1-2-2v-4"></path><line x1="3" y1="12" x2="21" y2="12"></line></svg> Skeniraj račun</button>
+      <div class="scan-actions">
+        <button id="scan-receipt" class="btn-save scan-btn" type="button"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg> Slikaj račun</button>
+        <button id="upload-receipt" class="btn-save scan-btn" type="button"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg> Iz galerije</button>
+      </div>
       <input id="receipt-file" type="file" accept="image/*" capture="environment" class="hidden" />
+      <input id="receipt-gallery" type="file" accept="image/*" class="hidden" />
 
       <div class="toolbar">
         <label for="history-search">Traži:</label>
@@ -261,7 +265,7 @@
     </div>
   </div>
 
-  <script src="config.js?v=25"></script>
-  <script type="module" src="app.js?v=25"></script>
+  <script src="config.js?v=26"></script>
+  <script type="module" src="app.js?v=26"></script>
 </body>
 </html>
