@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "32";
+const APP_VERSION = "33";
 
 // ── Monokromatske ikone (currentColor — prate temu) ────────────
 const ICONS = {
@@ -391,7 +391,7 @@ function parseQty(s) {
   const m = s.match(/^([\d.,]+)\s*(.*)$/);
   let value = m ? m[1].replace(",", ".") : "";
   let unit = m ? m[2].trim() : "";
-  if (!QTY_UNITS.includes(unit)) unit = "";
+  if (!QTY_UNITS.includes(unit)) unit = "kom"; // bez prepoznate jedinice → zadano "kom" (umjesto da ništa ne bude odabrano)
   return { value, unit };
 }
 function initAddQty() {
