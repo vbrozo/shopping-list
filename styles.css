@@ -561,6 +561,7 @@ code {
   color: var(--muted);
   margin-top: 3px;
 }
+.muted-line.tiny { font-size: 0.74rem; opacity: 0.85; }
 
 /* Brzi unos — chips */
 .chips {
@@ -772,6 +773,7 @@ code {
 .receipt-row .rr-name:focus,
 .receipt-row .rr-qty:focus,
 .receipt-row .rr-price:focus { outline: none; border-color: var(--green); }
+.receipt-row.recognized { border-left: 3px solid var(--green); }
 .receipt-row .rr-del {
   flex: 0 0 auto;
   width: 28px;

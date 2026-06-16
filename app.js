@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "29";
+const APP_VERSION = "30";
 
 // ── Monokromatske ikone (currentColor — prate temu) ────────────
 const ICONS = {
@@ -744,10 +744,12 @@ function renderHistory() {
       const priceTxt = fmtPrice(p.price);
       if (priceTxt) parts.push(`${icon("tag")} ${priceTxt}`);
       if (p.bought_by) parts.push(`${icon("user")} ${esc(p.bought_by)}`);
+      const showReceipt = p.receipt_name && normKey(p.receipt_name) !== normKey(p.name);
       return `<li class="item">
                 <div class="item-main" data-act="edit-hist" data-id="${p.id}">
                   <div class="item-name">${esc(p.name)}${p.qty ? ` ×${esc(p.qty)}` : ""}</div>
                   <div class="muted-line">${parts.join(" · ")}</div>
+                  ${showReceipt ? `<div class="muted-line tiny">${icon("tag")} na računu: ${esc(p.receipt_name)}</div>` : ""}
                 </div>
                 <button class="btn-del" data-act="del-hist" data-id="${p.id}" aria-label="Obriši">×</button>
               </li>`;
@@ -1056,6 +1058,20 @@ async function handleReceiptFile(file) {
   }
 }
 
+// Rječnik: sirovi naziv s računa (receipt_name) → tvoje ime (name).
+// Gradi se iz povijesti; uzima najnovije ime za svaki naziv s računa.
+function receiptAliasMap() {
+  const map = {};
+  for (const p of purchases) {
+    if (!p.receipt_name || !p.name) continue;
+    const k = normKey(p.receipt_name);
+    if (!k) continue;
+    const at = p.purchased_at || 0;
+    if (!map[k] || at >= map[k].at) map[k] = { name: p.name, at };
+  }
+  return map;
+}
+
 function fillReceiptReview(parsed, rawText) {
   els.receiptStatus.textContent = parsed.rows.length
     ? `Pronađeno ${parsed.rows.length} stavki. Provjeri i ispravi po potrebi.`
@@ -1070,15 +1086,22 @@ function fillReceiptReview(parsed, rawText) {
   ).join("");
   els.receiptDate.value = msToDateInput(parsed.date || Date.now());
 
-  els.receiptRows.innerHTML = parsed.rows.map((r, i) => `
-    <div class="receipt-row" data-i="${i}">
+  const aliases = receiptAliasMap();
+  els.receiptRows.innerHTML = parsed.rows.map((r, i) => {
+    const alias = aliases[normKey(r.name)];
+    const display = alias ? alias.name : r.name;
+    // data-raw čuva sirovi naziv s računa za učenje rječnika
+    return `
+    <div class="receipt-row ${alias ? "recognized" : ""}" data-i="${i}" data-raw="${esc(r.name)}">
       <button type="button" class="rr-del" data-act="receipt-del" aria-label="Ukloni">×</button>
-      <input class="rr-name" type="text" value="${esc(r.name)}" aria-label="Naziv" />
+      <input class="rr-name" type="text" value="${esc(display)}" aria-label="Naziv"
+             title="Na računu: ${esc(r.name)}" />
       <div class="rr-nums">
         <input class="rr-qty" type="text" value="${esc(r.qty)}" placeholder="kol" aria-label="Količina" autocomplete="off" />
         <input class="rr-price" type="text" inputmode="decimal" value="${esc(r.price)}" placeholder="cijena" aria-label="Cijena" />
       </div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
 
   if (parsed.total != null && parsed.rows.length) {
     const sum = parsed.rows.reduce((a, r) => a + (r.lineTotal || 0), 0);
@@ -1106,6 +1129,7 @@ async function confirmReceipt() {
       if (!name) continue;
       batch.set(doc(purchasesCol), {
         name,
+        receipt_name: row.dataset.raw || null, // sirovi naziv s računa (za rječnik)
         qty: row.querySelector(".rr-qty").value.trim() || null,
         store,
         price: parsePrice(row.querySelector(".rr-price").value),

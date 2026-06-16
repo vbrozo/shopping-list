@@ -33,6 +33,7 @@ radi **offline** (PWA) i hosta se besplatno na **GitHub Pages**. Sučelje je na 
 - **Cijena** na kupljenu stavku.
 - **„Spremi u povijest"** — dijalog gdje za svaku kupljenu stavku odabereš **dućan** i upišeš **cijenu**; arhivira se s datumom i imenom kupca.
 - **📷 Skeniranje računa (OCR)** — **slikaš račun** kamerom ili ga **učitaš iz galerije** (digitalni/spremljeni računi), a aplikacija pročita stavke i cijene **lokalno na uređaju** ([Tesseract.js](https://tesseract.projectnaptha.com), hrvatski model) — bez slanja slike igdje. Prepoznaje **dućan** iz zaglavlja, **datum** i svaku stavku (naziv · količina · cijena); količina se izvodi iz `iznos ÷ cijena` pa radi i za **vaganu robu** (kg) i **višekratnike**. Zbroj stavki se uspoređuje s „UKUPNO" na računu (✓/⚠). Sve je editabilno na **pregledu prije spremanja**.
+- **🔤 Učenje naziva** — kad na pregledu skeniranog računa preimenuješ stavku (npr. `FLIP POM BAR ORIG 50` → `Smoki`), aplikacija upamti vezu **naziv s računa → tvoje ime**. Idući put kad se isti artikl pojavi na računu, automatski ponudi tvoj naziv (prepoznata stavka ima zeleni rub). Sirovi naziv s računa vidi se i u povijesti.
 - **Cijene po artiklu** — usporedba cijena po dućanu za svaki artikl; najjeftiniji označen **★**.
 - **Pametno grupiranje naziva** — „Pom Bar – paprika", „Pom Bar paprika", „PomBar paprika" tretiraju se kao isti artikl (ignorira razmake, crtice, kvačice i velika/mala slova).
 - **Kronološka povijest** kupovina s **pretragom**; svaki zapis se može **urediti** (naziv, količina, dućan, cijena, datum) ili obrisati.
@@ -108,7 +109,7 @@ U **Firestore Database → Rules** zalijepi sadržaj [`firestore.rules`](firesto
 ## Model podataka (Firestore)
 
 - **`items`** (trenutna lista): `name`, `stores[]`, `qty`, `bought`, `bought_at`, `price`, `urgent`, `added_by`, `created_at`
-- **`purchases`** (povijest): `name`, `qty`, `store`, `price`, `bought_by`, `purchased_at`
+- **`purchases`** (povijest): `name`, `receipt_name` (sirovi naziv s računa — za prepoznavanje pri ponovnom skeniranju), `qty`, `store`, `price`, `bought_by`, `purchased_at`
 - **`settings/app`**: `stores[]` (lista dućana)
 
 ## Privatnost
