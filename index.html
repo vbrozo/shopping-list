@@ -16,12 +16,12 @@
     })();
   </script>
   <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icon-180.png?v=24" />
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=24" />
+  <link rel="apple-touch-icon" href="icon-180.png?v=25" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=25" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Lista" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="stylesheet" href="styles.css?v=24" />
+  <link rel="stylesheet" href="styles.css?v=25" />
 </head>
 <body>
   <header class="app-header">
@@ -109,6 +109,9 @@
 
     <!-- ══════════ PRIKAZ: POVIJEST ══════════ -->
     <div id="view-history" class="hidden">
+      <button id="scan-receipt" class="btn-save scan-btn" type="button"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9V5a2 2 0 0 1 2-2h4"></path><path d="M15 3h4a2 2 0 0 1 2 2v4"></path><path d="M21 15v4a2 2 0 0 1-2 2h-4"></path><path d="M9 21H5a2 2 0 0 1-2-2v-4"></path><line x1="3" y1="12" x2="21" y2="12"></line></svg> Skeniraj račun</button>
+      <input id="receipt-file" type="file" accept="image/*" capture="environment" class="hidden" />
+
       <div class="toolbar">
         <label for="history-search">Traži:</label>
         <input id="history-search" type="text" placeholder="ime artikla…" autocomplete="off" />
@@ -183,6 +186,26 @@
     </div>
   </div>
 
+  <!-- ══════════ DIJALOG: skeniranje računa (OCR) ══════════ -->
+  <div id="receipt-modal" class="modal hidden">
+    <div class="modal-card">
+      <h2>Skeniraj račun</h2>
+      <p id="receipt-status" class="hint"></p>
+      <div id="receipt-review" class="hidden">
+        <span class="picker-label">Dućan:</span>
+        <div id="receipt-stores" class="store-picker single"></div>
+        <span class="picker-label">Datum:</span>
+        <input id="receipt-date" class="sheet-input" type="date" />
+        <div id="receipt-rows"></div>
+        <p id="receipt-check" class="hint"></p>
+      </div>
+      <div class="modal-actions">
+        <button id="receipt-cancel" class="btn-text">Odustani</button>
+        <button id="receipt-confirm" class="btn-add hidden">Spremi sve ✓</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══════════ BOTTOM-SHEET: uređivanje zapisa povijesti ══════════ -->
   <div id="hist-sheet" class="modal hidden">
     <div class="modal-card">
@@ -238,7 +261,7 @@
     </div>
   </div>
 
-  <script src="config.js?v=24"></script>
-  <script type="module" src="app.js?v=24"></script>
+  <script src="config.js?v=25"></script>
+  <script type="module" src="app.js?v=25"></script>
 </body>
 </html>

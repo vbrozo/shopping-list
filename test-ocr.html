@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test OCR računa</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 760px; margin: 0 auto; padding: 16px; }
+    h1 { font-size: 1.2rem; }
+    .hint { color: #666; font-size: 0.9rem; }
+    button { padding: 10px 16px; font-size: 1rem; border-radius: 8px; border: 1px solid #2e7d32;
+             background: #2e7d32; color: #fff; cursor: pointer; }
+    #status { margin: 12px 0; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 0.95rem; }
+    td.num { text-align: right; }
+    .meta { background: #f4f7f4; padding: 10px 12px; border-radius: 8px; margin-top: 12px; }
+    .ok { color: #2e7d32; } .warn { color: #c0392b; }
+    details { margin-top: 16px; } pre { white-space: pre-wrap; font-size: 0.8rem; color: #444; }
+  </style>
+</head>
+<body>
+  <h1>🧾 Test OCR računa (bez Firebasea)</h1>
+  <p class="hint">Odaberi sliku računa — OCR se vrti lokalno u pregledniku (Tesseract.js, hrvatski model).
+     Ovo testira samo čitanje/parsiranje; ništa se ne sprema.</p>
+
+  <input id="file" type="file" accept="image/*" />
+  <div id="status"></div>
+
+  <div id="result" hidden>
+    <div class="meta">
+      <div><strong>Dućan:</strong> <span id="r-store"></span></div>
+      <div><strong>Datum:</strong> <span id="r-date"></span></div>
+      <div id="r-check"></div>
+    </div>
+    <table>
+      <thead><tr><th>Naziv</th><th>Količina</th><th class="num">Cijena</th><th class="num">Iznos</th></tr></thead>
+      <tbody id="r-rows"></tbody>
+    </table>
+    <details><summary>Sirovi OCR tekst</summary><pre id="r-raw"></pre></details>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script>
+    // ── Iste pomoćne funkcije i parser kao u app.js (samostalna kopija za test) ──
+    const STORES = ["Konzum", "DM", "Lidl", "Tvornica Zdrave Hrane", "Spar", "Plodine", "Kaufland", "Eurospin"];
+    function deaccent(s) {
+      return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d");
+    }
+    function parsePrice(str) {
+      if (str == null) return null;
+      const n = parseFloat(String(str).replace(",", ".").replace(/[^\d.]/g, ""));
+      return isNaN(n) ? null : n;
+    }
+    function parseReceipt(text) {
+      const lines = String(text || "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      const out = { store: null, date: null, total: null, rows: [] };
+      const head = deaccent(lines.slice(0, 8).join(" "));
+      for (const s of STORES) { if (head.includes(deaccent(s))) { out.store = s; break; } }
+      const dm = text.match(/(\d{1,2})\.\s?(\d{1,2})\.\s?(\d{4})/);
+      if (dm) { const ms = new Date(+dm[3], +dm[2] - 1, +dm[1], 12).getTime(); if (!isNaN(ms)) out.date = ms; }
+
+      const NUM = "(\\d{1,4}[.,]\\d{2})";
+      const itemRe = new RegExp("^(.+?)\\s+" + NUM + "\\s+" + NUM + "(?:\\s+[A-ZČĆĐŠŽ])?\\s*$");
+      const STOP = /^(ukupno|p\s*pdv|pdv\b|osnovica|na[čc]in pla|gotovina|kartica|iznos\b)/i;
+      const SKIP = /(popust|naknad|paketi|vre[ćc]ic|bonus|sli[čc]ic|rabat)/i;
+
+      for (const line of lines) {
+        if (STOP.test(line)) {
+          if (/ukupno/i.test(line)) { const m = line.match(/ukupno\D*([\d.,]+\d)/i); if (m) out.total = parsePrice(m[1]); }
+          break;
+        }
+        if (SKIP.test(line)) continue;
+        const m = line.match(itemRe);
+        if (!m) continue;
+        let name = m[1].trim();
+        const cijena = parsePrice(m[2]); const iznos = parsePrice(m[3]);
+        if (cijena == null || iznos == null || cijena <= 0) continue;
+        let qtyNum = iznos / cijena;
+        const tail = name.match(/\s+(\d{1,3}(?:[.,]\d{1,3})?)\s*$/);
+        if (tail) { const tok = parsePrice(tail[1]);
+          if (tok != null && Math.abs(tok - qtyNum) < 0.06) { name = name.slice(0, tail.index).trim(); qtyNum = tok; } }
+        if (!/[a-zčćđšžA-ZČĆĐŠŽ]{2,}/.test(name)) continue;
+        let qtyStr = "";
+        if (Math.abs(qtyNum - 1) >= 0.02) {
+          qtyStr = Math.abs(qtyNum - Math.round(qtyNum)) < 0.02
+            ? `${Math.round(qtyNum)} kom`
+            : `${(Math.round(qtyNum * 1000) / 1000).toString().replace(".", ",")} kg`;
+        }
+        out.rows.push({ name, qty: qtyStr, price: cijena.toFixed(2).replace(".", ","), lineTotal: iznos });
+      }
+      return out;
+    }
+
+    // ── UI ──
+    const $ = (id) => document.getElementById(id);
+    $("file").addEventListener("change", async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      $("result").hidden = true;
+      $("status").textContent = "Prepoznajem tekst… (može potrajati prvih par sekundi)";
+      try {
+        const { data } = await Tesseract.recognize(file, "hrv", {
+          logger: (m) => { if (m.status === "recognizing text")
+            $("status").textContent = `Prepoznajem… ${Math.round((m.progress || 0) * 100)}%`; }
+        });
+        const p = parseReceipt(data.text);
+        $("status").textContent = `Pronađeno ${p.rows.length} stavki.`;
+        $("r-store").textContent = p.store || "(nije prepoznat)";
+        $("r-date").textContent = p.date ? new Date(p.date).toLocaleDateString("hr-HR") : "(nije prepoznat)";
+        const sum = p.rows.reduce((a, r) => a + (r.lineTotal || 0), 0);
+        $("r-check").innerHTML = p.total != null
+          ? `<strong>Zbroj stavki:</strong> ${sum.toFixed(2)} € · <strong>Na računu:</strong> ${p.total.toFixed(2)} € ` +
+            (Math.abs(sum - p.total) < 0.02 ? '<span class="ok">✓</span>' : '<span class="warn">⚠ provjeri</span>')
+          : "";
+        $("r-rows").innerHTML = p.rows.map((r) =>
+          `<tr><td>${r.name}</td><td>${r.qty || "1"}</td><td class="num">${r.price} €</td><td class="num">${r.lineTotal.toFixed(2)} €</td></tr>`
+        ).join("");
+        $("r-raw").textContent = data.text;
+        $("result").hidden = false;
+      } catch (err) {
+        console.error(err);
+        $("status").textContent = "Greška: " + err.message;
+      }
+    });
+  </script>
+</body>
+</html>

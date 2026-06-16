@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "24";
+const APP_VERSION = "25";
 
 // ── Monokromatske ikone (currentColor — prate temu) ────────────
 const ICONS = {
@@ -122,6 +122,17 @@ const els = {
   archiveRows: $("archive-rows"),
   archiveCancel: $("archive-cancel"),
   archiveConfirm: $("archive-confirm"),
+  scanReceipt: $("scan-receipt"),
+  receiptFile: $("receipt-file"),
+  receiptModal: $("receipt-modal"),
+  receiptStatus: $("receipt-status"),
+  receiptReview: $("receipt-review"),
+  receiptStores: $("receipt-stores"),
+  receiptDate: $("receipt-date"),
+  receiptRows: $("receipt-rows"),
+  receiptCheck: $("receipt-check"),
+  receiptCancel: $("receipt-cancel"),
+  receiptConfirm: $("receipt-confirm"),
 };
 
 if (!configured) {
@@ -884,6 +895,214 @@ async function confirmArchive() {
   } catch (e) { console.error(e); setSync(false); }
 }
 
+// ── Skeniranje računa (OCR, Tesseract.js) ──────────────────────
+// Tesseract se učitava tek na prvi klik (ne usporava pokretanje).
+let tesseractLoading = null;
+function loadTesseract() {
+  if (window.Tesseract) return Promise.resolve(window.Tesseract);
+  if (tesseractLoading) return tesseractLoading;
+  tesseractLoading = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    s.onload = () => window.Tesseract ? resolve(window.Tesseract) : reject(new Error("Tesseract nedostupan"));
+    s.onerror = () => { tesseractLoading = null; reject(new Error("Učitavanje Tesseracta nije uspjelo")); };
+    document.head.appendChild(s);
+  });
+  return tesseractLoading;
+}
+
+// Slika → smanjeno, sivo + blagi kontrast (bolji OCR, manje memorije)
+async function preprocessImage(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => {
+      const i = new Image();
+      i.onload = () => res(i);
+      i.onerror = () => rej(new Error("Slika nije čitljiva"));
+      i.src = url;
+    });
+    const scale = Math.min(1, 1600 / (img.width || 1600));
+    const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const ctx = c.getContext("2d");
+    ctx.drawImage(img, 0, 0, w, h);
+    const d = ctx.getImageData(0, 0, w, h);
+    const px = d.data;
+    for (let i = 0; i < px.length; i += 4) {
+      let g = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+      g = g < 128 ? g * 0.7 : Math.min(255, g * 1.18); // blagi kontrast
+      px[i] = px[i + 1] = px[i + 2] = g;
+    }
+    ctx.putImageData(d, 0, 0);
+    return c;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+// Iz OCR teksta izvuci dućan, datum, ukupno i stavke.
+// Pravilo: zadnja dva decimalna broja u retku = cijena i iznos;
+// količina = iznos / cijena (rješava i vaganu robu i višekratnike).
+function parseReceipt(text) {
+  const lines = String(text || "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const out = { store: null, date: null, total: null, rows: [] };
+
+  // Dućan — poznati naziv u zaglavlju računa
+  const head = deaccent(lines.slice(0, 8).join(" "));
+  for (const s of STORES) {
+    if (head.includes(deaccent(s))) { out.store = s; break; }
+  }
+  // Datum (dd.mm.yyyy bilo gdje na računu)
+  const dm = text.match(/(\d{1,2})\.\s?(\d{1,2})\.\s?(\d{4})/);
+  if (dm) {
+    const ms = new Date(+dm[3], +dm[2] - 1, +dm[1], 12).getTime();
+    if (!isNaN(ms)) out.date = ms;
+  }
+
+  const NUM = "(\\d{1,4}[.,]\\d{2})";
+  const itemRe = new RegExp("^(.+?)\\s+" + NUM + "\\s+" + NUM + "(?:\\s+[A-ZČĆĐŠŽ])?\\s*$");
+  const STOP = /^(ukupno|p\s*pdv|pdv\b|osnovica|na[čc]in pla|gotovina|kartica|iznos\b)/i;
+  const SKIP = /(popust|naknad|paketi|vre[ćc]ic|bonus|sli[čc]ic|rabat)/i;
+
+  for (const line of lines) {
+    if (STOP.test(line)) {
+      if (/ukupno/i.test(line)) {
+        const m = line.match(/ukupno\D*([\d.,]+\d)/i);
+        if (m) out.total = parsePrice(m[1]);
+      }
+      break; // stavke su iznad sažetka
+    }
+    if (SKIP.test(line)) continue;
+    const m = line.match(itemRe);
+    if (!m) continue;
+
+    let name = m[1].trim();
+    const cijena = parsePrice(m[2]);
+    const iznos = parsePrice(m[3]);
+    if (cijena == null || iznos == null || cijena <= 0) continue;
+
+    let qtyNum = iznos / cijena;
+    // Skini "Kol" broj s kraja naziva ako odgovara izračunatoj količini
+    const tail = name.match(/\s+(\d{1,3}(?:[.,]\d{1,3})?)\s*$/);
+    if (tail) {
+      const tok = parsePrice(tail[1]);
+      if (tok != null && Math.abs(tok - qtyNum) < 0.06) {
+        name = name.slice(0, tail.index).trim();
+        qtyNum = tok; // otisnuta količina je točnija od izračunate
+      }
+    }
+    if (!/[a-zčćđšžA-ZČĆĐŠŽ]{2,}/.test(name)) continue; // odbaci OCR smeće
+
+    let qtyStr = "";
+    if (Math.abs(qtyNum - 1) >= 0.02) {
+      qtyStr = Math.abs(qtyNum - Math.round(qtyNum)) < 0.02
+        ? `${Math.round(qtyNum)} kom`
+        : `${(Math.round(qtyNum * 1000) / 1000).toString().replace(".", ",")} kg`;
+    }
+    out.rows.push({
+      name,
+      qty: qtyStr,
+      price: cijena.toFixed(2).replace(".", ","), // bruto jedinična cijena s računa
+      lineTotal: iznos,
+    });
+  }
+  return out;
+}
+
+function openReceiptModal() {
+  els.receiptStatus.textContent = "Učitavam…";
+  els.receiptReview.classList.add("hidden");
+  els.receiptConfirm.classList.add("hidden");
+  els.receiptRows.innerHTML = "";
+  els.receiptModal.classList.remove("hidden");
+}
+function closeReceiptModal() {
+  els.receiptModal.classList.add("hidden");
+}
+
+async function handleReceiptFile(file) {
+  if (!file) return;
+  openReceiptModal();
+  try {
+    els.receiptStatus.textContent = "Pripremam sliku…";
+    const [Tesseract, canvas] = await Promise.all([loadTesseract(), preprocessImage(file)]);
+    els.receiptStatus.textContent = "Prepoznajem tekst… (može potrajati)";
+    const { data } = await Tesseract.recognize(canvas, "hrv", {
+      logger: (m) => {
+        if (m.status === "recognizing text") {
+          els.receiptStatus.textContent = `Prepoznajem tekst… ${Math.round((m.progress || 0) * 100)}%`;
+        }
+      },
+    });
+    fillReceiptReview(parseReceipt(data.text));
+  } catch (e) {
+    console.error(e);
+    els.receiptStatus.textContent = "Greška pri čitanju računa. Provjeri vezu i pokušaj ponovno.";
+  }
+}
+
+function fillReceiptReview(parsed) {
+  els.receiptStatus.textContent = parsed.rows.length
+    ? `Pronađeno ${parsed.rows.length} stavki. Provjeri i ispravi po potrebi.`
+    : "Nisam prepoznao stavke na računu. Pokušaj s oštrijom slikom.";
+
+  els.receiptStores.innerHTML = STORES.map(
+    (s) => `<button type="button" class="store-chip ${s === parsed.store ? "selected" : ""}"
+       data-act="receipt-store" data-store="${esc(s)}">${esc(s)}</button>`
+  ).join("");
+  els.receiptDate.value = msToDateInput(parsed.date || Date.now());
+
+  els.receiptRows.innerHTML = parsed.rows.map((r, i) => `
+    <div class="receipt-row" data-i="${i}">
+      <button type="button" class="rr-del" data-act="receipt-del" aria-label="Ukloni">×</button>
+      <input class="rr-name" type="text" value="${esc(r.name)}" aria-label="Naziv" />
+      <div class="rr-nums">
+        <input class="rr-qty" type="text" value="${esc(r.qty)}" placeholder="kol" aria-label="Količina" autocomplete="off" />
+        <input class="rr-price" type="text" inputmode="decimal" value="${esc(r.price)}" placeholder="cijena" aria-label="Cijena" />
+      </div>
+    </div>`).join("");
+
+  if (parsed.total != null && parsed.rows.length) {
+    const sum = parsed.rows.reduce((a, r) => a + (r.lineTotal || 0), 0);
+    const ok = Math.abs(sum - parsed.total) < 0.02;
+    els.receiptCheck.textContent =
+      `Zbroj stavki: ${sum.toFixed(2)} € · Na računu: ${parsed.total.toFixed(2)} € ${ok ? "✓" : "⚠ provjeri stavke"}`;
+  } else {
+    els.receiptCheck.textContent = "";
+  }
+
+  els.receiptReview.classList.remove("hidden");
+  els.receiptConfirm.classList.toggle("hidden", parsed.rows.length === 0);
+}
+
+async function confirmReceipt() {
+  const rows = [...els.receiptRows.querySelectorAll(".receipt-row")];
+  const sel = els.receiptStores.querySelector(".store-chip.selected");
+  const store = sel ? sel.dataset.store : null;
+  const at = dateInputToMs(els.receiptDate.value, Date.now());
+  try {
+    const batch = writeBatch(db);
+    let n = 0;
+    for (const row of rows) {
+      const name = row.querySelector(".rr-name").value.trim();
+      if (!name) continue;
+      batch.set(doc(purchasesCol), {
+        name,
+        qty: row.querySelector(".rr-qty").value.trim() || null,
+        store,
+        price: parsePrice(row.querySelector(".rr-price").value),
+        bought_by: userName || null,
+        purchased_at: at,
+      });
+      n++;
+    }
+    if (n) await batch.commit();
+    closeReceiptModal();
+    toast(`Spremljeno u povijest: ${n} stavki ✓`);
+  } catch (e) { console.error(e); setSync(false); }
+}
+
 async function deleteHistory(id) {
   const p = purchases.find((x) => x.id === id);
   if (!p) return;
@@ -1067,6 +1286,12 @@ if (configured) {
       row.querySelectorAll(".store-chip").forEach((c) => c.classList.remove("selected"));
       if (!was) btn.classList.add("selected");
     }
+    else if (act === "receipt-store") {
+      const was = btn.classList.contains("selected");
+      els.receiptStores.querySelectorAll(".store-chip").forEach((c) => c.classList.remove("selected"));
+      if (!was) btn.classList.add("selected");
+    }
+    else if (act === "receipt-del") btn.closest(".receipt-row")?.remove();
     else if (act === "qty-unit") {
       addUnit = addUnit === btn.dataset.unit ? "" : btn.dataset.unit;
       renderAddUnits();
@@ -1095,6 +1320,19 @@ if (configured) {
   els.archiveConfirm.addEventListener("click", confirmArchive);
   els.archiveModal.addEventListener("click", (e) => {
     if (e.target === els.archiveModal) closeArchiveModal();
+  });
+
+  // Skeniranje računa (OCR)
+  els.scanReceipt.addEventListener("click", () => els.receiptFile.click());
+  els.receiptFile.addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    handleReceiptFile(file);
+    e.target.value = ""; // dopusti ponovni odabir iste slike
+  });
+  els.receiptCancel.addEventListener("click", closeReceiptModal);
+  els.receiptConfirm.addEventListener("click", confirmReceipt);
+  els.receiptModal.addEventListener("click", (e) => {
+    if (e.target === els.receiptModal) closeReceiptModal();
   });
   els.historySearch.addEventListener("input", (e) => {
     historyQuery = e.target.value;

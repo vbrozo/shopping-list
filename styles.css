@@ -729,6 +729,61 @@ code {
 .sheet-input { margin: 6px 0 4px; }
 .sheet-input:focus, .archive-price:focus { outline: none; border-color: var(--green); }
 
+/* Skeniranje računa */
+.scan-btn { margin-bottom: 12px; }
+.receipt-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+.receipt-row .rr-name {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: var(--bg);
+  color: var(--text);
+}
+.receipt-row .rr-nums {
+  display: flex;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.receipt-row .rr-qty { width: 64px; }
+.receipt-row .rr-price { width: 78px; }
+.receipt-row .rr-qty,
+.receipt-row .rr-price {
+  padding: 9px 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: var(--bg);
+  color: var(--text);
+  text-align: right;
+}
+.receipt-row .rr-name:focus,
+.receipt-row .rr-qty:focus,
+.receipt-row .rr-price:focus { outline: none; border-color: var(--green); }
+.receipt-row .rr-del {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--text);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
 .modal-actions {
   display: flex;
   gap: 10px;
