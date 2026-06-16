@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "26";
+const APP_VERSION = "27";
 
 // ── Monokromatske ikone (currentColor — prate temu) ────────────
 const ICONS = {
@@ -133,6 +133,8 @@ const els = {
   receiptDate: $("receipt-date"),
   receiptRows: $("receipt-rows"),
   receiptCheck: $("receipt-check"),
+  receiptRaw: $("receipt-raw"),
+  receiptRawWrap: $("receipt-raw-wrap"),
   receiptCancel: $("receipt-cancel"),
   receiptConfirm: $("receipt-confirm"),
 };
@@ -962,27 +964,34 @@ function parseReceipt(text) {
     if (!isNaN(ms)) out.date = ms;
   }
 
-  const NUM = "(\\d{1,4}[.,]\\d{2})";
-  const itemRe = new RegExp("^(.+?)\\s+" + NUM + "\\s+" + NUM + "(?:\\s+[A-ZČĆĐŠŽ])?\\s*$");
   const STOP = /^(ukupno|p\s*pdv|pdv\b|osnovica|na[čc]in pla|gotovina|kartica|iznos\b)/i;
   const SKIP = /(popust|naknad|paketi|vre[ćc]ic|bonus|sli[čc]ic|rabat)/i;
+  // Novčani iznos: 1–4 znamenke + 2 decimale (npr. 4,99). Ne hvata 0,5L (1 decimala).
+  const PRICE = /\d{1,4}[.,]\d{2}(?!\d)/g;
 
-  for (const line of lines) {
-    if (STOP.test(line)) {
-      if (/ukupno/i.test(line)) {
-        const m = line.match(/ukupno\D*([\d.,]+\d)/i);
+  for (let raw of lines) {
+    if (STOP.test(raw)) {
+      if (/ukupno/i.test(raw)) {
+        const m = raw.match(/ukupno\D*([\d.,]+\d)/i);
         if (m) out.total = parsePrice(m[1]);
       }
       break; // stavke su iznad sažetka
     }
-    if (SKIP.test(line)) continue;
-    const m = line.match(itemRe);
-    if (!m) continue;
+    if (SKIP.test(raw)) continue;
+    // Spoji razmaknute brojeve iz OCR-a ("2 , 09" → "2,09")
+    const line = raw.replace(/(\d)\s*[.,]\s*(\d{2})(?!\d)/g, "$1,$2");
+    // Mora počinjati slovom (naziv artikla), inače je zaglavlje/šum
+    if (!/^[^0-9]*[a-zčćđšžA-ZČĆĐŠŽ]{2,}/.test(line)) continue;
 
-    let name = m[1].trim();
-    const cijena = parsePrice(m[2]);
-    const iznos = parsePrice(m[3]);
+    const prices = line.match(PRICE);
+    if (!prices || !prices.length) continue;
+    // Zadnji iznos = ukupno za redak; pretposljednji (ako postoji) = jedinična cijena
+    const iznos = parsePrice(prices[prices.length - 1]);
+    const cijena = parsePrice(prices.length > 1 ? prices[prices.length - 2] : prices[0]);
     if (cijena == null || iznos == null || cijena <= 0) continue;
+
+    // Naziv = dio prije prvog novčanog iznosa
+    let name = line.slice(0, line.indexOf(prices[0])).trim();
 
     let qtyNum = iznos / cijena;
     // Skini "Kol" broj s kraja naziva ako odgovara izračunatoj količini
@@ -1037,17 +1046,20 @@ async function handleReceiptFile(file) {
         }
       },
     });
-    fillReceiptReview(parseReceipt(data.text));
+    fillReceiptReview(parseReceipt(data.text), data.text);
   } catch (e) {
     console.error(e);
     els.receiptStatus.textContent = "Greška pri čitanju računa. Provjeri vezu i pokušaj ponovno.";
   }
 }
 
-function fillReceiptReview(parsed) {
+function fillReceiptReview(parsed, rawText) {
   els.receiptStatus.textContent = parsed.rows.length
     ? `Pronađeno ${parsed.rows.length} stavki. Provjeri i ispravi po potrebi.`
-    : "Nisam prepoznao stavke na računu. Pokušaj s oštrijom slikom.";
+    : "Nisam prepoznao stavke na računu. Pogledaj „Sirovi OCR tekst" niže ili pokušaj s oštrijom slikom.";
+
+  els.receiptRaw.textContent = rawText || "";
+  els.receiptRawWrap.classList.toggle("hidden", !rawText);
 
   els.receiptStores.innerHTML = STORES.map(
     (s) => `<button type="button" class="store-chip ${s === parsed.store ? "selected" : ""}"

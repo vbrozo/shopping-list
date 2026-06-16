@@ -16,12 +16,12 @@
     })();
   </script>
   <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icon-180.png?v=26" />
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=26" />
+  <link rel="apple-touch-icon" href="icon-180.png?v=27" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=27" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Lista" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="stylesheet" href="styles.css?v=26" />
+  <link rel="stylesheet" href="styles.css?v=27" />
 </head>
 <body>
   <header class="app-header">
@@ -203,6 +203,10 @@
         <div id="receipt-rows"></div>
         <p id="receipt-check" class="hint"></p>
       </div>
+      <details id="receipt-raw-wrap" class="receipt-raw-wrap hidden">
+        <summary>Sirovi OCR tekst (za provjeru)</summary>
+        <pre id="receipt-raw"></pre>
+      </details>
       <div class="modal-actions">
         <button id="receipt-cancel" class="btn-text">Odustani</button>
         <button id="receipt-confirm" class="btn-add hidden">Spremi sve ✓</button>
@@ -265,7 +269,7 @@
     </div>
   </div>
 
-  <script src="config.js?v=26"></script>
-  <script type="module" src="app.js?v=26"></script>
+  <script src="config.js?v=27"></script>
+  <script type="module" src="app.js?v=27"></script>
 </body>
 </html>
