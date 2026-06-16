@@ -588,15 +588,33 @@ code {
 .trip-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   padding: 12px 14px;
+}
+.trip-header-main {
+  flex: 1;
+  min-width: 0;
   cursor: pointer;
 }
 .trip-header .muted-line { margin: 0; }
+.btn-repeat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  color: var(--green);
+  cursor: pointer;
+}
+.btn-repeat .icn { width: 0.95em; height: 0.95em; }
 .trip-chevron {
   display: flex;
   flex-shrink: 0;
+  cursor: pointer;
   transition: transform 0.2s ease;
 }
 .trip-group.collapsed .trip-chevron { transform: rotate(-180deg); }
@@ -1066,6 +1084,20 @@ code {
 .star-btn.on { color: #f0a000; }
 .star-btn.on .icn { fill: currentColor; }
 .item.urgent .item-inner { box-shadow: inset 4px 0 0 #f0a000; }
+
+/* Ponavljajuća stavka */
+.recur-btn {
+  background: none;
+  border: none;
+  padding: 0 2px 0 0;
+  margin: 0;
+  cursor: pointer;
+  color: var(--muted);
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.recur-btn .icn { width: 0.95em; height: 0.95em; }
+.recur-btn.on { color: var(--green); }
 
 .hidden { display: none !important; }
 

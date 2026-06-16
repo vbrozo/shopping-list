@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-const APP_VERSION = "33";
+const APP_VERSION = "34";
 
 // ── Monokromatske ikone (currentColor — prate temu) ────────────
 const ICONS = {
@@ -614,6 +614,7 @@ function renderItem(item) {
   const priceTxt = item.bought ? fmtPrice(item.price) : null;
   if (priceTxt) meta.push(`${icon("tag")} ${priceTxt}`);
   if (item.added_by) meta.push(`${icon("user")} ${esc(item.added_by)}`);
+  if (item.recurring) meta.push(`${icon("refresh")} ponavlja se`);
 
   const qtyTag = item.qty ? `<span class="qty-tag">×${esc(item.qty)}</span>` : "";
 
@@ -627,6 +628,7 @@ function renderItem(item) {
         <div class="item-main" data-act="edit-item" data-id="${item.id}">
           <div class="item-row1">
             <button class="star-btn ${item.urgent ? "on" : ""}" data-act="star" data-id="${item.id}" aria-label="Hitno">${icon("star")}</button>
+            <button class="recur-btn ${item.recurring ? "on" : ""}" data-act="recur" data-id="${item.id}" aria-label="Ponavljajuća stavka">${icon("refresh")}</button>
             <span class="item-name">${esc(item.name)}</span>
             ${qtyTag}
           </div>
@@ -810,9 +812,12 @@ function renderHistory() {
         .join("");
 
       return `<li class="trip-group ${collapsed ? "collapsed" : ""}">
-                <div class="trip-header" data-act="toggle-trip" data-trip="${esc(trip.key)}">
-                  <div class="muted-line">${headParts.join(" · ")}</div>
-                  <span class="trip-chevron">${icon("chevron")}</span>
+                <div class="trip-header">
+                  <div class="trip-header-main" data-act="toggle-trip" data-trip="${esc(trip.key)}">
+                    <div class="muted-line">${headParts.join(" · ")}</div>
+                  </div>
+                  <button type="button" class="btn-repeat" data-act="repeat-trip" data-trip="${esc(trip.key)}" aria-label="Ponovi kupovinu">${icon("refresh")} Ponovi</button>
+                  <span class="trip-chevron" data-act="toggle-trip" data-trip="${esc(trip.key)}">${icon("chevron")}</span>
                 </div>
                 <ul class="list trip-items">${rows}</ul>
               </li>`;
@@ -862,7 +867,7 @@ function removeStore(name) {
 }
 
 // ── Akcije: lista ──────────────────────────────────────────────
-async function addItem(name, stores, qty) {
+async function addItem(name, stores, qty, recurring) {
   let st = stores && stores.length ? stores : usualStoresFor(name);
   try {
     await addDoc(itemsCol, {
@@ -873,9 +878,20 @@ async function addItem(name, stores, qty) {
       bought: false,
       bought_at: null,
       price: null,
+      urgent: false,
+      recurring: !!recurring,
       added_by: userName || null,
       created_at: Date.now(),
     });
+  } catch (e) { console.error(e); setSync(false); }
+}
+
+async function toggleRecurring(id) {
+  const item = items.find((i) => i.id === id);
+  if (!item) return;
+  haptic();
+  try {
+    await updateDoc(doc(db, "items", id), { recurring: !item.recurring });
   } catch (e) { console.error(e); setSync(false); }
 }
 
@@ -964,7 +980,12 @@ async function confirmArchive() {
         purchased_at: it.bought_at || Date.now(),
         trip_id: tripId,
       });
-      batch.delete(doc(db, "items", id));
+      if (it.recurring) {
+        // Ponavljajuća stavka: vrati na listu umjesto brisanja
+        batch.update(doc(db, "items", id), { bought: false, bought_at: null, price: null });
+      } else {
+        batch.delete(doc(db, "items", id));
+      }
     }
     await batch.commit();
     closeArchiveModal();
@@ -1229,6 +1250,23 @@ async function deleteHistory(id) {
   } catch (e) { console.error(e); setSync(false); }
 }
 
+// Ponovi kupovinu — dodaj na listu sve (jedinstvene) stavke iz prošle kupovine
+async function repeatTrip(key) {
+  const trip = purchases.filter((p) => tripKeyOf(p) === key);
+  if (trip.length === 0) return;
+  const activeNames = new Set(items.filter((i) => !i.bought).map((i) => normKey(i.name)));
+  const seen = new Set();
+  let added = 0;
+  for (const p of trip) {
+    const nk = normKey(p.name);
+    if (seen.has(nk) || activeNames.has(nk)) continue;
+    seen.add(nk);
+    await addItem(p.name, p.store ? [p.store] : [], p.qty || null);
+    added++;
+  }
+  toast(added ? `Dodano na listu: ${added} stavki ✓` : "Sve stavke su već na listi");
+}
+
 // ── Glasovni unos (Web Speech API) ─────────────────────────────
 let recognition = null;
 let listening = false;
@@ -1370,6 +1408,7 @@ if (configured) {
     const { act, id, store } = btn.dataset;
     if (act === "toggle") toggleBought(id);
     else if (act === "star") toggleStar(id);
+    else if (act === "recur") toggleRecurring(id);
     else if (act === "edit-item") openEditSheet(id);
     else if (act === "edit-store") {
       editStores.has(store) ? editStores.delete(store) : editStores.add(store);
@@ -1416,6 +1455,7 @@ if (configured) {
       collapsedTrips.has(key) ? collapsedTrips.delete(key) : collapsedTrips.add(key);
       renderHistory();
     }
+    else if (act === "repeat-trip") repeatTrip(btn.dataset.trip);
     else if (act === "quick") quickAdd(btn.dataset.name, store);
     else if (act === "suggest") {
       els.itemInput.value = btn.dataset.name;

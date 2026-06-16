@@ -1,7 +1,7 @@
 // Service worker — offline podrška (app shell caching)
-const CACHE = "lista-v33";
-const CORE = ["./", "index.html", "styles.css?v=33", "manifest.json",
-  "icon-192.png", "icon-512.png", "icon-180.png?v=33", "favicon-32.png?v=33"];
+const CACHE = "lista-v34";
+const CORE = ["./", "index.html", "styles.css?v=34", "manifest.json",
+  "icon-192.png", "icon-512.png", "icon-180.png?v=34", "favicon-32.png?v=34"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(

@@ -15,6 +15,7 @@ radi **offline** (PWA) i hosta se besplatno na **GitHub Pages**. Sučelje je na 
 - **Brisanje** — povuci stavku **ulijevo** (pokaže se crveni „Obriši" sloj) ili gumb ✕; nakon brisanja **„Poništi"** vraća stavku.
 - **Uređivanje** — dodir na karticu otvara editor (naziv, količina, dućani, cijena).
 - **⭐ Hitno** — zvjezdica na stavci; hitne stavke idu na vrh i imaju istaknut rub.
+- **🔁 Ponavljajuće stavke** — ikona kraj naziva; kad se takva stavka arhivira u povijest, **automatski se vrati na listu** (nekupljena) umjesto da se obriše — korisno za artikle koji se kupuju redovito (npr. „mlijeko svaki tjedan").
 - **Jedinstvene kartice** — sve stavke imaju isti raspored: `kvačica · naziv · količina` i meta-red `dućani · cijena · tko je dodao`.
 
 ### 🏪 Dućani
@@ -36,7 +37,8 @@ radi **offline** (PWA) i hosta se besplatno na **GitHub Pages**. Sučelje je na 
 - **🔤 Učenje naziva** — kad na pregledu skeniranog računa preimenuješ stavku (npr. `FLIP POM BAR ORIG 50` → `Smoki`), aplikacija upamti vezu **naziv s računa → tvoje ime**. Idući put kad se isti artikl pojavi na računu, automatski ponudi tvoj naziv (prepoznata stavka ima zeleni rub). Sirovi naziv s računa vidi se i u povijesti.
 - **Cijene po artiklu** — usporedba cijena po dućanu za svaki artikl; najjeftiniji označen **★**.
 - **Pametno grupiranje naziva** — „Pom Bar – paprika", „Pom Bar paprika", „PomBar paprika" tretiraju se kao isti artikl (ignorira razmake, crtice, kvačice i velika/mala slova).
-- **Kronološka povijest** kupovina s **pretragom**; svaki zapis se može **urediti** (naziv, količina, dućan, cijena, datum) ili obrisati.
+- **Kronološka povijest** kupovina, **grupirana po kupovini** (sklopive kartice s datumom, dućanom, brojem stavki i zbrojem), s **pretragom**; svaki zapis se može **urediti** (naziv, količina, dućan, cijena, datum) ili obrisati.
+- **🔁 Ponovi kupovinu** — gumb na kartici prošle kupovine vraća sve njene stavke na trenutnu listu jednim dodirom (preskače stavke koje su već na listi).
 
 ### 🧠 Pametne procjene
 - **Procjena košarice** — približan zbroj cijene trenutne liste (na temelju zadnjih poznatih cijena).
@@ -129,11 +131,9 @@ python3 -m http.server 8000
 ## Ideje za dalje
 - 🔐 Zaštita prijavom (Firebase Auth) — privatna lista
 - 📈 Grafovi kretanja cijena kroz vrijeme
-- 🧾 Predlošci liste / „ponovi prošlu kupovinu"
 - 📤 Izvoz povijesti (CSV)
 - 📊 Mjesečni trošak po dućanu
 - 🗂️ Kategorije/odjeli (voće-povrće, mliječno…) s redoslijedom polica po dućanu
 - 📝 Više listi (npr. „Tjedna kupovina", „Roštilj")
 - 🔔 Push obavijesti za hitne stavke / podsjetnici
-- 🔁 Ponavljajuće stavke (npr. „mlijeko svaki tjedan")
 - 📦 Barkod skener za brzo dodavanje artikla
