@@ -71,6 +71,7 @@ export const els = {
   histName: $("hist-name"),
   histQtyValue: $("hist-qty-value"),
   histQtyUnits: $("hist-qty-units"),
+  histStores: $("hist-stores"),
   histPrice: $("hist-price"),
   histDate: $("hist-date"),
   histSave: $("hist-save"),

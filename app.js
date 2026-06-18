@@ -76,6 +76,7 @@ if (configured) {
     else if (act === "edit-store") itemEditor.toggleStore(store);
     else if (act === "edit-qty-unit") itemEditor.toggleUnit(btn.dataset.unit);
     else if (act === "edit-hist") histEditor.open(id);
+    else if (act === "hist-store") histEditor.toggleStore(store);
     else if (act === "hist-qty-unit") histEditor.toggleUnit(btn.dataset.unit);
     else if (act === "edit-article") {
       const key = btn.dataset.key;

@@ -118,7 +118,7 @@ export const histEditor = createEditor({
   findRecord: (id) => state.purchases.find((p) => p.id === id),
   fields: {
     name: els.histName, qtyValue: els.histQtyValue, qtyUnits: els.histQtyUnits,
-    stores: { innerHTML: "" }, cats: { innerHTML: "" }, // placeholder — not shown in sheet
+    stores: els.histStores, cats: { innerHTML: "" }, // cats not shown in hist sheet
     price: els.histPrice, sheet: els.histSheet,
     date: els.histDate,
   },
