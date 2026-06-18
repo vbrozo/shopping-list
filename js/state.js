@@ -5,7 +5,7 @@
 // setState() koji obavijesti pretplatnike (render se zove sam).
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-export const APP_VERSION = "40";
+export const APP_VERSION = "41";
 
 // ── Dućani (uredivi u Postavkama; spremaju se u Firestore) ─────
 export const DEFAULT_STORES = ["Konzum", "DM", "Lidl", "Tvornica Zdrave Hrane"];

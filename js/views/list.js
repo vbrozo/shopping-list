@@ -197,7 +197,7 @@ function renderQuickAdd() {
   const available = [...new Set(Object.values(stats))]
     .filter((s) => !onList.has(s.name.toLowerCase()));
   const favs = available.filter((s) => state.favorites.has(normKey(s.name)))
-    .sort((a, b) => a.name.localeCompare(b.name, "hr"));
+    .sort((a, b) => b.count - a.count || b.lastAt - a.lastAt);
   const rest = available.filter((s) => !state.favorites.has(normKey(s.name)))
     .sort((a, b) => b.count - a.count || b.lastAt - a.lastAt);
   const top = [...favs, ...rest].slice(0, 20);
