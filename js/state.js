@@ -5,7 +5,7 @@
 // setState() koji obavijesti pretplatnike (render se zove sam).
 
 // ── Verzija (za prikaz i provjeru je li nova učitana) ──────────
-export const APP_VERSION = "39";
+export const APP_VERSION = "40";
 
 // ── Dućani (uredivi u Postavkama; spremaju se u Firestore) ─────
 export const DEFAULT_STORES = ["Konzum", "DM", "Lidl", "Tvornica Zdrave Hrane"];
@@ -36,6 +36,7 @@ export const state = {
   purchases: [],
   STORES: [...DEFAULT_STORES],
   CATEGORIES: [...DEFAULT_CATEGORIES],
+  favorites: new Set(), // normKey-evi omiljenih artikala (sync u Firestore)
   filterStore: "",
   view: "list",
   historyQuery: "",

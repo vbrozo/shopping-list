@@ -520,6 +520,23 @@
   transform: rotate(-90deg);
 }
 
+/* ── Favorit gumb u Cijene po artiklu ───────────────────────── */
+.btn-fav {
+  flex-shrink: 0;
+  align-self: center;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.btn-fav .icn { width: 1.2em; height: 1.2em; }
+.btn-fav.active { color: var(--accent); }
+.btn-fav.active .icn { fill: var(--accent); }
+
 /* ── "Dodaj na listu" gumb u Cijene po artiklu ──────────────── */
 .btn-add-to-list {
   flex-shrink: 0;

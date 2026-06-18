@@ -10,11 +10,13 @@ const minPrice = (s) => s.prices.length ? Math.min(...s.prices.map((p) => p.pric
 function priceStatHTML(s) {
   const nameKey = normKey(s.name);
   const onList = state.items.some((i) => normKey(i.name) === nameKey && !i.bought);
+  const isFav = state.favorites.has(nameKey);
   const addBtn = html`<button class="btn-add-to-list ${onList ? "on-list" : ""}" data-act="article-add" data-name="${s.name}" data-store="${s.prices.length ? Object.entries(s.perStore).sort((a, b) => a[1].min - b[1].min)[0][0] : ""}" aria-label="Dodaj na listu">${onList ? "✓" : icon("plus")}</button>`;
+  const favBtn = html`<button class="btn-fav ${isFav ? "active" : ""}" data-act="toggle-fav" data-key="${nameKey}" aria-label="Favorit">${icon("star")}</button>`;
 
   if (s.prices.length === 0) {
     return html`<li class="item" ><div class="item-body item-main" data-act="edit-article" data-key="${nameKey}"><div class="item-name">${s.name}</div>
-            <div class="muted-line">još bez cijene · ${s.count}× kupljeno</div></div>${raw(addBtn)}</li>`;
+            <div class="muted-line">još bez cijene · ${s.count}× kupljeno</div></div>${raw(favBtn)}${raw(addBtn)}</li>`;
   }
   const entries = Object.entries(s.perStore).sort((a, b) => a[1].min - b[1].min);
   const cheapest = entries[0][0];
@@ -30,7 +32,7 @@ function priceStatHTML(s) {
   return html`<li class="item col"><div class="item-body item-main" data-act="edit-article" data-key="${nameKey}">
             <div class="item-name">${s.name}</div>
             <div class="price-table">${raw(rows)}</div>
-          </div>${raw(addBtn)}</li>`;
+          </div>${raw(favBtn)}${raw(addBtn)}</li>`;
 }
 
 // ── Statistike za tekući mjesec ────────────────────────────────

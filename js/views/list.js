@@ -194,10 +194,13 @@ function renderItem(item) {
 function renderQuickAdd() {
   const stats = aggregateByName();
   const onList = new Set(state.items.map((i) => i.name.toLowerCase()));
-  const top = [...new Set(Object.values(stats))]
-    .filter((s) => !onList.has(s.name.toLowerCase()))
-    .sort((a, b) => b.count - a.count || b.lastAt - a.lastAt)
-    .slice(0, 10);
+  const available = [...new Set(Object.values(stats))]
+    .filter((s) => !onList.has(s.name.toLowerCase()));
+  const favs = available.filter((s) => state.favorites.has(normKey(s.name)))
+    .sort((a, b) => a.name.localeCompare(b.name, "hr"));
+  const rest = available.filter((s) => !state.favorites.has(normKey(s.name)))
+    .sort((a, b) => b.count - a.count || b.lastAt - a.lastAt);
+  const top = [...favs, ...rest].slice(0, 20);
 
   els.quickAddSection.classList.toggle("hidden", top.length === 0);
   els.quickAdd.innerHTML = top

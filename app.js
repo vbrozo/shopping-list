@@ -3,7 +3,7 @@
 // ── Ulazna točka: poveži module, postavi event listenere i sync ─
 import { APP_VERSION, state, setState, subscribe, DEFAULT_STORES, DEFAULT_CATEGORIES } from "./js/state.js";
 import { els } from "./js/dom.js";
-import { configured, itemsCol, purchasesCol, settingsDoc, onSnapshot } from "./js/firebase.js";
+import { configured, itemsCol, purchasesCol, settingsDoc, onSnapshot, setDoc } from "./js/firebase.js";
 import { setThemeChoice, setAccent } from "./js/theme.js";
 import { setSync, buildQty, sortStores, toast, aggregateByName, normKey, tripKeyOf } from "./js/util.js";
 import { render } from "./js/render.js";
@@ -160,6 +160,13 @@ if (configured) {
     else if (act === "accent-set") { setAccent(btn.dataset.accent); renderSettings(); }
     else if (act === "store-del") removeStore(btn.dataset.store);
     else if (act === "cat-del") removeCategory(btn.dataset.cat);
+    else if (act === "toggle-fav") {
+      const key = btn.dataset.key;
+      const favs = new Set(state.favorites);
+      favs.has(key) ? favs.delete(key) : favs.add(key);
+      setState({ favorites: favs });
+      setDoc(settingsDoc, { favorites: [...favs] }, { merge: true }).catch((e) => { console.error(e); setSync(false); });
+    }
   });
 
   els.storeFilter.addEventListener("change", render);
@@ -313,7 +320,10 @@ if (configured) {
     const CATEGORIES = data && Array.isArray(data.categories) && data.categories.length
       ? data.categories.filter((c) => typeof c === "string" && c.trim())
       : [...DEFAULT_CATEGORIES];
-    setState({ STORES, CATEGORIES });
+    const favorites = new Set(
+      data && Array.isArray(data.favorites) ? data.favorites : []
+    );
+    setState({ STORES, CATEGORIES, favorites });
   }, (err) => { console.error(err); setSync(false); });
 }
 
