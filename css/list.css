@@ -474,3 +474,28 @@
 .recur-btn .icn { width: 0.95em; height: 0.95em; }
 .recur-btn.on { color: var(--green); }
 
+
+/* ── Tabovi u povijesti ─────────────────────────────────────── */
+.hist-tabs {
+  display: flex;
+  gap: 0;
+  margin: 12px 0 16px;
+  border-bottom: 2px solid var(--border);
+}
+.hist-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  padding: 10px 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.hist-tab[aria-selected="true"] {
+  color: var(--green);
+  border-bottom-color: var(--green);
+}

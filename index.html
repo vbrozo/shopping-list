@@ -141,10 +141,16 @@
         <input id="history-search" type="text" placeholder="ime artikla…" autocomplete="off" />
       </div>
 
-      <!-- Pregled cijena po artiklu -->
-      <section>
+      <!-- Tab bar -->
+      <div class="hist-tabs" role="tablist">
+        <button id="tab-prices" class="hist-tab" role="tab" aria-selected="true" aria-controls="panel-prices">Cijene po artiklu</button>
+        <button id="tab-trips" class="hist-tab" role="tab" aria-selected="false" aria-controls="panel-trips">Povijest kupovina</button>
+      </div>
+
+      <!-- Tab: Cijene po artiklu -->
+      <div id="panel-prices" role="tabpanel">
         <div class="section-header">
-          <h2 class="section-title">Cijene po artiklu</h2>
+          <span></span>
           <select id="price-group" class="mini-select" aria-label="Grupiraj cijene">
             <option value="none">Bez grupiranja</option>
             <option value="category">Po kategoriji</option>
@@ -152,13 +158,12 @@
         </div>
         <ul id="price-list" class="list"></ul>
         <p id="empty-history" class="empty hidden">Još nema spremljenih kupovina.</p>
-      </section>
+      </div>
 
-      <!-- Kronološka povijest -->
-      <section id="timeline-section" class="hidden">
-        <h2 class="section-title">Povijest kupovina</h2>
+      <!-- Tab: Povijest kupovina -->
+      <div id="panel-trips" role="tabpanel" class="hidden">
         <ul id="history-list" class="list"></ul>
-      </section>
+      </div>
     </div>
     <!-- ══════════ PRIKAZ: POSTAVKE ══════════ -->
     <div id="view-settings" class="hidden">

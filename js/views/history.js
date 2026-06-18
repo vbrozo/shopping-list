@@ -30,6 +30,13 @@ function priceStatHTML(s) {
 // ── Render: POVIJEST ───────────────────────────────────────────
 export function renderHistory() {
   const q = state.historyQuery.trim().toLowerCase();
+  const tab = state.historyTab;
+
+  els.tabPrices.setAttribute("aria-selected", tab === "prices");
+  els.tabTrips.setAttribute("aria-selected", tab === "trips");
+  els.panelPrices.classList.toggle("hidden", tab !== "prices");
+  els.panelTrips.classList.toggle("hidden", tab !== "trips");
+
   els.emptyHistory.classList.toggle("hidden", state.purchases.length > 0);
 
   const stats = [...new Set(Object.values(aggregateByName()))]
@@ -75,7 +82,6 @@ export function renderHistory() {
     }))
     .sort((a, b) => b.maxAt - a.maxAt);
 
-  els.timelineSection.classList.toggle("hidden", tripList.length === 0);
   els.historyList.innerHTML = tripList
     .map((trip) => {
       const stores = [...new Set(trip.items.map((p) => p.store).filter(Boolean))];

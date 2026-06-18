@@ -159,6 +159,14 @@ if (configured) {
   els.historySearch.addEventListener("input", (e) => {
     setState({ historyQuery: e.target.value });
   });
+  els.tabPrices.addEventListener("click", () => {
+    localStorage.setItem("historyTab", "prices");
+    setState({ historyTab: "prices" });
+  });
+  els.tabTrips.addEventListener("click", () => {
+    localStorage.setItem("historyTab", "trips");
+    setState({ historyTab: "trips" });
+  });
   els.viewToggle.addEventListener("click", () => {
     setState({ view: state.view === "history" ? "list" : "history" });
   });
