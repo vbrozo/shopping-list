@@ -28,18 +28,18 @@
     })();
   </script>
   <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icon-180.png?v=38" />
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=38" />
+  <link rel="apple-touch-icon" href="icon-180.png?v=39" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=39" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Lista" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="stylesheet" href="css/base.css?v=38" />
-  <link rel="stylesheet" href="css/layout.css?v=38" />
-  <link rel="stylesheet" href="css/forms.css?v=38" />
-  <link rel="stylesheet" href="css/list.css?v=38" />
-  <link rel="stylesheet" href="css/modals.css?v=38" />
-  <link rel="stylesheet" href="css/settings.css?v=38" />
-  <link rel="stylesheet" href="css/icons.css?v=38" />
+  <link rel="stylesheet" href="css/base.css?v=39" />
+  <link rel="stylesheet" href="css/layout.css?v=39" />
+  <link rel="stylesheet" href="css/forms.css?v=39" />
+  <link rel="stylesheet" href="css/list.css?v=39" />
+  <link rel="stylesheet" href="css/modals.css?v=39" />
+  <link rel="stylesheet" href="css/settings.css?v=39" />
+  <link rel="stylesheet" href="css/icons.css?v=39" />
 </head>
 <body>
   <header class="app-header">
@@ -262,6 +262,23 @@
     </div>
   </div>
 
+  <!-- ══════════ DIJALOG: spajanje dvije kupovine ══════════ -->
+  <div id="merge-modal" class="modal hidden">
+    <div class="modal-card">
+      <h2>Spoji kupovine?</h2>
+      <p class="hint">Stavke prve kupovine bit će premještene u drugu.</p>
+      <div class="merge-labels">
+        <div class="merge-label merge-label--src" id="merge-source-label"></div>
+        <div class="merge-arrow">→</div>
+        <div class="merge-label merge-label--dst" id="merge-dest-label"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="merge-cancel" class="btn-text">Odustani</button>
+        <button id="merge-confirm" class="btn-add">Spoji ✓</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══════════ DIJALOG: uređivanje cijele kupovine ══════════ -->
   <div id="trip-edit-modal" class="modal hidden">
     <div class="modal-card">
@@ -377,7 +394,7 @@
     </div>
   </div>
 
-  <script src="config.js?v=38"></script>
-  <script type="module" src="app.js?v=38"></script>
+  <script src="config.js?v=39"></script>
+  <script type="module" src="app.js?v=39"></script>
 </body>
 </html>

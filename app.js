@@ -22,6 +22,7 @@ import {
 import { handleReceiptFile, closeReceiptModal, confirmReceipt, openTripEdit, closeTripEdit, saveTripEdit } from "./js/receipt.js";
 import { initVoice, toggleVoice } from "./js/voice.js";
 import { initSwipe, swipeGuard } from "./js/swipe.js";
+import { initTripMerge } from "./js/trip-merge.js";
 
 if (!configured) {
   els.setupNotice.classList.remove("hidden");
@@ -287,6 +288,7 @@ if (configured) {
   initAddQty();
   initVoice();
   initSwipe();
+  initTripMerge();
 
   // Render se sada zove sam na svaku promjenu stanja
   subscribe(render);

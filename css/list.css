@@ -602,3 +602,28 @@
   cursor: pointer;
 }
 .btn-edit-trip .icn { width: 0.95em; height: 0.95em; }
+
+/* ── Merge tripova (drag & drop) ────────────────────────────── */
+.trip-group.merge-target {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+#history-list.merging .trip-group:not(.merge-target) {
+  opacity: 0.6;
+}
+.merge-labels {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+}
+.merge-label {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  text-align: center;
+}
+.merge-label--src { background: #fff3e0; border: 1px solid #ffcc80; }
+.merge-label--dst { background: #e8f5e9; border: 1px solid #a5d6a7; }
+.merge-arrow { font-size: 1.2rem; color: var(--muted); flex-shrink: 0; }

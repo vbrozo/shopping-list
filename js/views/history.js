@@ -150,7 +150,7 @@ export function renderHistory() {
         })
         .join("");
 
-      return html`<li class="trip-group ${collapsed ? "collapsed" : ""}">
+      return html`<li class="trip-group ${collapsed ? "collapsed" : ""}" data-trip-key="${trip.key}">
                 <div class="trip-header">
                   <div class="trip-header-main" data-act="toggle-trip" data-trip="${trip.key}">
                     <div class="muted-line">${raw(headParts.join(" · "))}</div>
