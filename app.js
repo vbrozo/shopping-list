@@ -264,7 +264,6 @@ if (configured) {
     localStorage.setItem("userName", value);
     settingsState.nameEditing = false;
     setState({ userName: value });
-    setDoc(settingsDoc, { userName: value || null }, { merge: true }).catch((e) => { console.error(e); setSync(false); });
     toastName(value);
   });
 
@@ -324,9 +323,7 @@ if (configured) {
     const favorites = new Set(
       data && Array.isArray(data.favorites) ? data.favorites : []
     );
-    const userName = (data && typeof data.userName === "string") ? data.userName : (localStorage.getItem("userName") || "");
-    if (userName) localStorage.setItem("userName", userName);
-    setState({ STORES, CATEGORIES, favorites, userName });
+    setState({ STORES, CATEGORIES, favorites });
   }, (err) => { console.error(err); setSync(false); });
 }
 
