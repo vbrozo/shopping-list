@@ -238,6 +238,10 @@ export function aggregateByName() {
       if (maxLen < 6) continue; // kratki nazivi: rizik lažnog spajanja
       const maxDist = maxLen <= 9 ? 1 : 2;
       if (levenshtein(ki, kj) > maxDist) continue;
+      // Ne spajaj ako se razlikuju u brojevima (npr. "50g" vs "100g")
+      const digitsI = ki.match(/\d+/g) || [];
+      const digitsJ = kj.match(/\d+/g) || [];
+      if (digitsI.join() !== digitsJ.join()) continue;
       const e2 = map[kj];
       target.count += e2.count;
       for (const [nm, c] of Object.entries(e2.nameCounts)) target.nameCounts[nm] = (target.nameCounts[nm] || 0) + c;
