@@ -31,6 +31,11 @@ html.dark[data-accent="red"]    { --green: #e57373; --green-dark: #ef9a9a; }
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Spriječi iOS auto-zoom na focus inputa (zahtijeva font-size >= 16px) */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea { font-size: max(1rem, 16px) !important; }
+}
+
 html, body {
   margin: 0;
   padding: 0;
