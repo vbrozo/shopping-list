@@ -557,3 +557,32 @@
 .hist-tab[aria-selected="false"] .bought-badge {
   background: var(--muted);
 }
+
+/* ── Statistike na vrhu povijesti ───────────────────────────── */
+.hist-stats {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 8px 8px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.stat-item .icn { width: 1.1em; height: 1.1em; color: var(--green); margin-bottom: 2px; }
+.stat-val {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+.stat-lbl { font-size: 0.7rem; }

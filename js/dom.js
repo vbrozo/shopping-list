@@ -49,6 +49,8 @@ export const els = {
   catPicker: $("cat-picker"),
   editCats: $("edit-cats"),
   groupLabel: $("group-label"),
+  histStats: $("hist-stats"),
+  priceSort: $("price-sort"),
   priceGroup: $("price-group"),
   nameForm: $("name-form"),
   nameInput: $("name-input"),

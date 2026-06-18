@@ -43,7 +43,8 @@ export const state = {
   collapsedPriceCats: new Set(), // sklopljene kategorije u "Cijene po artiklu"
   // Način grupiranja liste: "none" | "store" | "category" (kompatibilno sa starom postavkom)
   groupMode: localStorage.getItem("groupMode") || (localStorage.getItem("groupByStore") === "1" ? "store" : "none"),
-  priceGroupBy: localStorage.getItem("priceGroupBy") || "none", // grupiranje "Cijene po artiklu"
+  priceGroupBy: localStorage.getItem("priceGroupBy") || "none",
+  priceSortBy: localStorage.getItem("priceSortBy") || "name", // sortiranje "Cijene po artiklu": name | price | count
   historyTab: localStorage.getItem("historyTab") || "prices", // aktivni tab u povijesti: "prices" | "trips"
   listTab: localStorage.getItem("listTab") || "add", // aktivni tab na listi: "add" | "list"
   userName: localStorage.getItem("userName") || "",

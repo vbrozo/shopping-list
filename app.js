@@ -214,6 +214,11 @@ if (configured) {
     els.newCatInput.value = "";
   });
   // Grupiranje "Cijene po artiklu" u povijesti
+  els.priceSort.value = state.priceSortBy;
+  els.priceSort.addEventListener("change", (e) => {
+    localStorage.setItem("priceSortBy", e.target.value);
+    setState({ priceSortBy: e.target.value });
+  });
   els.priceGroup.value = state.priceGroupBy;
   els.priceGroup.addEventListener("change", (e) => {
     localStorage.setItem("priceGroupBy", e.target.value);

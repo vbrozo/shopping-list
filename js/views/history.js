@@ -4,6 +4,8 @@ import { state } from "../state.js";
 import { els, icon } from "../dom.js";
 import { html, raw, aggregateByName, normKey, tripKeyOf, fmtDate, fmtPrice } from "../util.js";
 
+const minPrice = (s) => s.prices.length ? Math.min(...s.prices.map((p) => p.price)) : null;
+
 // Jedna kartica u "Cijene po artiklu" (usporedba cijena po dućanu)
 function priceStatHTML(s) {
   const nameKey = normKey(s.name);
@@ -31,6 +33,25 @@ function priceStatHTML(s) {
           </div>${raw(addBtn)}</li>`;
 }
 
+// ── Statistike za tekući mjesec ────────────────────────────────
+function renderStats() {
+  if (!state.purchases.length) { els.histStats.classList.add("hidden"); return; }
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const thisMonth = state.purchases.filter((p) => (p.purchased_at || 0) >= monthStart);
+  const spent = thisMonth.reduce((s, p) => s + (typeof p.price === "number" ? p.price : 0), 0);
+  const trips = new Set(thisMonth.map((p) => tripKeyOf(p))).size;
+  const storeCounts = {};
+  for (const p of thisMonth) if (p.store) storeCounts[p.store] = (storeCounts[p.store] || 0) + 1;
+  const topStore = Object.entries(storeCounts).sort((a, b) => b[1] - a[1])[0];
+
+  els.histStats.classList.remove("hidden");
+  els.histStats.innerHTML =
+    html`<div class="stat-item">${icon("tag")} <span class="stat-val">${spent.toFixed(2)} €</span><span class="stat-lbl">ovaj mjesec</span></div>` +
+    html`<div class="stat-item">${icon("bag")} <span class="stat-val">${trips}</span><span class="stat-lbl">${trips === 1 ? "kupovina" : "kupovina"}</span></div>` +
+    (topStore ? html`<div class="stat-item">${icon("pin")} <span class="stat-val">${topStore[0]}</span><span class="stat-lbl">najčešći dućan</span></div>` : "");
+}
+
 // ── Render: POVIJEST ───────────────────────────────────────────
 export function renderHistory() {
   const q = state.historyQuery.trim().toLowerCase();
@@ -43,9 +64,17 @@ export function renderHistory() {
 
   els.emptyHistory.classList.toggle("hidden", state.purchases.length > 0);
 
+  renderStats();
+
+  const sortFn = {
+    name:  (a, b) => a.name.localeCompare(b.name, "hr"),
+    price: (a, b) => (minPrice(a) ?? Infinity) - (minPrice(b) ?? Infinity),
+    count: (a, b) => b.count - a.count,
+  }[state.priceSortBy] || ((a, b) => a.name.localeCompare(b.name, "hr"));
+
   const stats = [...new Set(Object.values(aggregateByName()))]
     .filter((s) => !q || s.name.toLowerCase().includes(q))
-    .sort((a, b) => a.name.localeCompare(b.name, "hr"));
+    .sort(sortFn);
 
   if (state.priceGroupBy === "category") {
     const noCat = "📦 Bez kategorije";

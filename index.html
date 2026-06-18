@@ -153,6 +153,9 @@
         <input id="history-search" type="text" placeholder="ime artikla…" autocomplete="off" />
       </div>
 
+      <!-- Statistike -->
+      <div id="hist-stats" class="hist-stats hidden"></div>
+
       <!-- Tab bar -->
       <div class="hist-tabs" role="tablist">
         <button id="tab-prices" class="hist-tab" role="tab" aria-selected="true" aria-controls="panel-prices">Cijene po artiklu</button>
@@ -162,7 +165,11 @@
       <!-- Tab: Cijene po artiklu -->
       <div id="panel-prices" role="tabpanel">
         <div class="section-header">
-          <span></span>
+          <select id="price-sort" class="mini-select" aria-label="Sortiraj cijene">
+            <option value="name">A–Ž</option>
+            <option value="price">Cijena ↑</option>
+            <option value="count">Najkupljenije</option>
+          </select>
           <select id="price-group" class="mini-select" aria-label="Grupiraj cijene">
             <option value="none">Bez grupiranja</option>
             <option value="category">Po kategoriji</option>
