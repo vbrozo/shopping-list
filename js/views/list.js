@@ -162,7 +162,10 @@ function renderItem(item) {
     storeText = html`${icon("pin")} ${shown}${extra}`;
   }
   const meta = [storeText];
-  if (item.category) meta.push(html`<span class="cat-tag">${item.category}</span>`);
+  if (item.category) {
+    const catIcon = [...item.category][0] || item.category;
+    meta.push(html`<span class="cat-tag" title="${item.category}">${catIcon}</span>`);
+  }
   const priceTxt = item.bought ? fmtPrice(item.price) : null;
   if (priceTxt) meta.push(html`${icon("tag")} ${priceTxt}`);
   if (item.added_by) meta.push(html`${icon("user")} ${item.added_by}`);

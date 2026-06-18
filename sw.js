@@ -1,9 +1,9 @@
 // Service worker — offline podrška (app shell caching)
-const CACHE = "lista-v41";
+const CACHE = "lista-v42";
 const CORE = ["./", "index.html", "manifest.json",
-  "css/base.css?v=41", "css/layout.css?v=41", "css/forms.css?v=41", "css/list.css?v=41",
-  "css/modals.css?v=41", "css/settings.css?v=41", "css/icons.css?v=41",
-  "icon-192.png", "icon-512.png", "icon-180.png?v=41", "favicon-32.png?v=41"];
+  "css/base.css?v=42", "css/layout.css?v=42", "css/forms.css?v=42", "css/list.css?v=42",
+  "css/modals.css?v=42", "css/settings.css?v=42", "css/icons.css?v=42",
+  "icon-192.png", "icon-512.png", "icon-180.png?v=42", "favicon-32.png?v=42"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
