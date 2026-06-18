@@ -207,7 +207,7 @@ function renderQuickAdd() {
     .map(
       (s) =>
         html`<button class="chip" data-act="quick" data-name="${s.name}" data-store="${s.lastStore || ""}">
-           ${s.name}${s.lastStore ? html` <span class="chip-store">${s.lastStore}</span>` : ""}
+           ${s.name}
          </button>`
     )
     .join("");
