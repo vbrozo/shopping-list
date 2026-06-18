@@ -75,6 +75,12 @@ export function hideSuggestions() {
 }
 
 export function renderList() {
+  const tab = state.listTab;
+  els.listTabAdd.setAttribute("aria-selected", tab === "add");
+  els.listTabList.setAttribute("aria-selected", tab === "list");
+  els.listPanelAdd.classList.toggle("hidden", tab !== "add");
+  els.listPanelList.classList.toggle("hidden", tab !== "list");
+
   renderStorePicker();
   els.groupToggle.classList.toggle("active", state.groupMode !== "none");
   els.groupLabel.textContent =

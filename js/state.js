@@ -44,6 +44,7 @@ export const state = {
   groupMode: localStorage.getItem("groupMode") || (localStorage.getItem("groupByStore") === "1" ? "store" : "none"),
   priceGroupBy: localStorage.getItem("priceGroupBy") || "none", // grupiranje "Cijene po artiklu"
   historyTab: localStorage.getItem("historyTab") || "prices", // aktivni tab u povijesti: "prices" | "trips"
+  listTab: localStorage.getItem("listTab") || "add", // aktivni tab na listi: "add" | "list"
   userName: localStorage.getItem("userName") || "",
   allNames: [], // svi poznati nazivi (za prijedloge pri tipkanju)
 };

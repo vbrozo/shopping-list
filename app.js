@@ -114,7 +114,11 @@ if (configured) {
       render();
     }
     else if (act === "repeat-trip") repeatTrip(btn.dataset.trip);
-    else if (act === "quick") quickAdd(btn.dataset.name, store);
+    else if (act === "quick") {
+      quickAdd(btn.dataset.name, store);
+      localStorage.setItem("listTab", "list");
+      setState({ listTab: "list" });
+    }
     else if (act === "suggest") {
       els.itemInput.value = btn.dataset.name;
       applyAutoStore(btn.dataset.name);
@@ -158,6 +162,14 @@ if (configured) {
   });
   els.historySearch.addEventListener("input", (e) => {
     setState({ historyQuery: e.target.value });
+  });
+  els.listTabAdd.addEventListener("click", () => {
+    localStorage.setItem("listTab", "add");
+    setState({ listTab: "add" });
+  });
+  els.listTabList.addEventListener("click", () => {
+    localStorage.setItem("listTab", "list");
+    setState({ listTab: "list" });
   });
   els.tabPrices.addEventListener("click", () => {
     localStorage.setItem("historyTab", "prices");
@@ -269,7 +281,8 @@ function addItemFromForm(name) {
   addForm.categoryTouched = false;
   renderStorePicker();
   hideSuggestions();
-  els.itemInput.focus();
+  localStorage.setItem("listTab", "list");
+  setState({ listTab: "list" });
 }
 
 function toastName(value) {

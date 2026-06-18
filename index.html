@@ -63,68 +63,80 @@
 
     <!-- ══════════ PRIKAZ: LISTA ══════════ -->
     <div id="view-list">
-      <!-- Forma za dodavanje -->
-      <form id="add-form" class="add-form">
-        <div class="add-input-wrap">
-          <div class="input-row">
-            <input
-              id="item-input"
-              type="text"
-              placeholder="Dodaj stavku (npr. mlijeko)"
-              autocomplete="off"
-              required />
-            <button type="button" id="mic-btn" class="btn-mic" aria-label="Glasovni unos"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v1a7 7 0 0 1-14 0v-1"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg></button>
-            <button type="submit" class="btn-add" aria-label="Dodaj"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
-          </div>
-          <ul id="suggest-list" class="suggest-list hidden"></ul>
-        </div>
-        <button type="button" id="details-toggle" class="details-toggle"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg> Dućan i količina</button>
-        <div id="add-details" class="add-details hidden">
-          <span class="picker-label">Količina:</span>
-          <div class="qty-row">
-            <input id="qty-value" class="qty-num" type="text" inputmode="decimal" placeholder="količina" autocomplete="off" />
-            <div id="qty-units" class="qty-units"></div>
-          </div>
-          <span class="picker-label">Dućan (može više):</span>
-          <div id="store-picker" class="store-picker"></div>
-          <span class="picker-label">Kategorija:</span>
-          <div id="cat-picker" class="store-picker single"></div>
-        </div>
-      </form>
-
-      <!-- Brzi unos na temelju prijašnjih kupovina -->
-      <section id="quick-add-section" class="hidden">
-        <h2 class="section-title">Brzi unos</h2>
-        <div id="quick-add" class="chips"></div>
-      </section>
-
-      <!-- Filter po dućanu + grupiranje -->
-      <div class="toolbar">
-        <label for="store-filter">Dućan:</label>
-        <select id="store-filter">
-          <option value="">Svi</option>
-        </select>
-        <button id="group-toggle" class="btn-toggle" type="button"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg> <span id="group-label">Grupiraj</span></button>
+      <!-- Tab bar -->
+      <div class="hist-tabs" role="tablist">
+        <button id="list-tab-add" class="hist-tab" role="tab" aria-selected="true" aria-controls="list-panel-add">Unos</button>
+        <button id="list-tab-list" class="hist-tab" role="tab" aria-selected="false" aria-controls="list-panel-list">Lista <span id="active-count" class="count">0</span></button>
       </div>
 
-      <!-- Procjena košarice + pametni dućan -->
-      <div id="list-summary" class="summary hidden"></div>
+      <!-- Tab: Unos -->
+      <div id="list-panel-add" role="tabpanel">
+        <!-- Forma za dodavanje -->
+        <form id="add-form" class="add-form">
+          <div class="add-input-wrap">
+            <div class="input-row">
+              <input
+                id="item-input"
+                type="text"
+                placeholder="Dodaj stavku (npr. mlijeko)"
+                autocomplete="off"
+                required />
+              <button type="button" id="mic-btn" class="btn-mic" aria-label="Glasovni unos"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v1a7 7 0 0 1-14 0v-1"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg></button>
+              <button type="submit" class="btn-add" aria-label="Dodaj"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+            </div>
+            <ul id="suggest-list" class="suggest-list hidden"></ul>
+          </div>
+          <button type="button" id="details-toggle" class="details-toggle"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg> Dućan i količina</button>
+          <div id="add-details" class="add-details hidden">
+            <span class="picker-label">Količina:</span>
+            <div class="qty-row">
+              <input id="qty-value" class="qty-num" type="text" inputmode="decimal" placeholder="količina" autocomplete="off" />
+              <div id="qty-units" class="qty-units"></div>
+            </div>
+            <span class="picker-label">Dućan (može više):</span>
+            <div id="store-picker" class="store-picker"></div>
+            <span class="picker-label">Kategorija:</span>
+            <div id="cat-picker" class="store-picker single"></div>
+          </div>
+        </form>
 
-      <!-- Aktivne stavke -->
-      <section>
-        <h2 class="section-title">Za kupiti <span id="active-count" class="count">0</span></h2>
-        <ul id="active-list" class="list"></ul>
-        <p id="empty-active" class="empty hidden">Lista je prazna. Dodaj prvu stavku!</p>
-      </section>
+        <!-- Brzi unos na temelju prijašnjih kupovina -->
+        <section id="quick-add-section" class="hidden">
+          <h2 class="section-title">Brzi unos</h2>
+          <div id="quick-add" class="chips"></div>
+        </section>
+      </div>
 
-      <!-- Kupljene stavke -->
-      <section id="bought-section" class="hidden">
-        <div class="section-header">
-          <h2 class="section-title">Kupljeno <span id="bought-count" class="count">0</span></h2>
-          <button id="clear-bought" class="btn-save"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg> Spremi u povijest</button>
+      <!-- Tab: Lista -->
+      <div id="list-panel-list" role="tabpanel" class="hidden">
+        <!-- Filter po dućanu + grupiranje -->
+        <div class="toolbar">
+          <label for="store-filter">Dućan:</label>
+          <select id="store-filter">
+            <option value="">Svi</option>
+          </select>
+          <button id="group-toggle" class="btn-toggle" type="button"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg> <span id="group-label">Grupiraj</span></button>
         </div>
-        <ul id="bought-list" class="list bought"></ul>
-      </section>
+
+        <!-- Procjena košarice + pametni dućan -->
+        <div id="list-summary" class="summary hidden"></div>
+
+        <!-- Aktivne stavke -->
+        <section>
+          <h2 class="section-title">Za kupiti</h2>
+          <ul id="active-list" class="list"></ul>
+          <p id="empty-active" class="empty hidden">Lista je prazna. Dodaj prvu stavku!</p>
+        </section>
+
+        <!-- Kupljene stavke -->
+        <section id="bought-section" class="hidden">
+          <div class="section-header">
+            <h2 class="section-title">Kupljeno <span id="bought-count" class="count">0</span></h2>
+            <button id="clear-bought" class="btn-save"><svg class="icn" viewBox="0 0 24 24" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg> Spremi u povijest</button>
+          </div>
+          <ul id="bought-list" class="list bought"></ul>
+        </section>
+      </div>
     </div>
 
     <!-- ══════════ PRIKAZ: POVIJEST ══════════ -->
