@@ -102,6 +102,7 @@ export const els = {
   syncDot: $("sync-dot"),
   listTabAdd: $("list-tab-add"),
   listTabList: $("list-tab-list"),
+  boughtBadge: $("bought-badge"),
   listPanelAdd: $("list-panel-add"),
   listPanelList: $("list-panel-list"),
   historySearch: $("history-search"),

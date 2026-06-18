@@ -107,13 +107,16 @@ export function renderHistory() {
           if (priceTxt) parts.push(html`${icon("tag")} ${priceTxt}`);
           if (p.bought_by) parts.push(html`${icon("user")} ${p.bought_by}`);
           const showReceipt = p.receipt_name && normKey(p.receipt_name) !== normKey(p.name);
-          return html`<li class="item">
-                    <div class="item-main" data-act="edit-hist" data-id="${p.id}">
-                      <div class="item-name">${p.name}${p.qty ? html` ×${p.qty}` : ""}</div>
-                      ${parts.length ? html`<div class="muted-line">${raw(parts.join(" · "))}</div>` : ""}
-                      ${showReceipt ? html`<div class="muted-line tiny">${icon("tag")} na računu: ${p.receipt_name}</div>` : ""}
+          return html`<li class="item swipeable" data-id="${p.id}">
+                    <div class="item-bg"><span class="item-bg-icon">${icon("trash")} Obriši</span></div>
+                    <div class="item-inner">
+                      <div class="item-main" data-act="edit-hist" data-id="${p.id}">
+                        <div class="item-name">${p.name}${p.qty ? html` ×${p.qty}` : ""}</div>
+                        ${parts.length ? html`<div class="muted-line">${raw(parts.join(" · "))}</div>` : ""}
+                        ${showReceipt ? html`<div class="muted-line tiny">${icon("tag")} na računu: ${p.receipt_name}</div>` : ""}
+                      </div>
+                      <button class="btn-del" data-act="del-hist" data-id="${p.id}" aria-label="Obriši">×</button>
                     </div>
-                    <button class="btn-del" data-act="del-hist" data-id="${p.id}" aria-label="Obriši">×</button>
                   </li>`;
         })
         .join("");

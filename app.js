@@ -116,7 +116,9 @@ if (configured) {
       renderAddUnits();
     }
     else if (act === "del") deleteItem(id);
-    else if (act === "del-hist") deleteHistory(id);
+    else if (act === "del-hist") {
+      if (confirm("Obriši ovaj zapis iz povijesti?")) deleteHistory(id);
+    }
     else if (act === "toggle-trip") {
       const key = btn.dataset.trip;
       state.collapsedTrips.has(key) ? state.collapsedTrips.delete(key) : state.collapsedTrips.add(key);

@@ -120,6 +120,8 @@ export function renderList() {
   els.boughtCount.textContent = bought.length;
   els.emptyActive.classList.toggle("hidden", active.length > 0);
   els.boughtSection.classList.toggle("hidden", bought.length === 0);
+  els.boughtBadge.textContent = bought.length ? `${bought.length}●` : "";
+  els.boughtBadge.classList.toggle("hidden", bought.length === 0);
 }
 
 // Aktivne stavke — grupirano po dućanu, kategoriji ili ravno

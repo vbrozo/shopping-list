@@ -541,3 +541,19 @@
   color: var(--muted);
   cursor: default;
 }
+
+/* ── Badge kupljenih stavki na Lista tabu ───────────────────── */
+.bought-badge {
+  display: inline-block;
+  margin-left: 5px;
+  font-size: 0.7rem;
+  color: #fff;
+  background: var(--green);
+  border-radius: 999px;
+  padding: 1px 5px;
+  vertical-align: middle;
+  font-weight: 700;
+}
+.hist-tab[aria-selected="false"] .bought-badge {
+  background: var(--muted);
+}

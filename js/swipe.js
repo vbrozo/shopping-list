@@ -2,7 +2,7 @@
 
 import { els } from "./dom.js";
 import { haptic } from "./util.js";
-import { deleteItem } from "./actions.js";
+import { deleteItem, deleteHistory } from "./actions.js";
 
 // ── Swipe za brisanje (lijevo) ─────────────────────────────────
 let swipe = null;
@@ -12,10 +12,13 @@ export const swipeGuard = { suppressClickUntil: 0 };
 export function initSwipe() {
   document.addEventListener("touchstart", (e) => {
     const li = e.target.closest(".item.swipeable[data-id]");
-    if (!li || !els.viewList.contains(li)) return;
+    if (!li) return;
+    const inList = els.viewList.contains(li);
+    const inHistory = els.viewHistory.contains(li);
+    if (!inList && !inHistory) return;
     if (e.target.closest("button, input, select, .store-editor")) return;
     const inner = li.querySelector(".item-inner");
-    swipe = { li, inner, id: li.dataset.id, x: e.touches[0].clientX, y: e.touches[0].clientY, moved: false, dx: 0 };
+    swipe = { li, inner, id: li.dataset.id, isHistory: inHistory, x: e.touches[0].clientX, y: e.touches[0].clientY, moved: false, dx: 0 };
   }, { passive: true });
 
   document.addEventListener("touchmove", (e) => {
@@ -40,7 +43,8 @@ export function initSwipe() {
       haptic(20);
       inner.style.transform = "translateX(-100%)";
       inner.style.opacity = "0";
-      deleteItem(swipe.id);
+      if (swipe.isHistory) deleteHistory(swipe.id);
+      else deleteItem(swipe.id);
     } else {
       inner.style.transform = "";
       li.classList.remove("will-delete");
