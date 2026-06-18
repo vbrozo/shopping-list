@@ -147,8 +147,7 @@ if (configured) {
     else if (act === "repeat-trip") repeatTrip(btn.dataset.trip);
     else if (act === "quick") {
       quickAdd(btn.dataset.name, store);
-      localStorage.setItem("listTab", "list");
-      setState({ listTab: "list" });
+      toast(`Dodano: ${btn.dataset.name}`);
     }
     else if (act === "suggest") {
       els.itemInput.value = btn.dataset.name;
@@ -340,8 +339,7 @@ function addItemFromForm(name) {
   addForm.categoryTouched = false;
   renderStorePicker();
   hideSuggestions();
-  localStorage.setItem("listTab", "list");
-  setState({ listTab: "list" });
+  toast(`Dodano: ${name}`);
 }
 
 function toastName(value) {
