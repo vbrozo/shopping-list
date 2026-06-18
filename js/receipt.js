@@ -232,6 +232,69 @@ function fillReceiptReview(parsed, rawText) {
   els.receiptConfirm.classList.toggle("hidden", parsed.rows.length === 0);
 }
 
+// ── Uređivanje postojeće kupovine ──────────────────────────────
+let editTripItems = []; // kopija stavki koje uređujemo
+
+export function openTripEdit(tripKey, tripItems) {
+  editTripItems = tripItems;
+  const stores = [...new Set(tripItems.map((p) => p.store).filter(Boolean))];
+  const primaryStore = stores[0] || null;
+  const date = Math.max(...tripItems.map((p) => p.purchased_at || 0));
+
+  els.tripEditStores.innerHTML = state.STORES.map(
+    (s) => html`<button type="button" class="store-chip ${s === primaryStore ? "selected" : ""}"
+       data-act="trip-edit-store" data-store="${s}">${s}</button>`
+  ).join("");
+  els.tripEditDate.value = msToDateInput(date || Date.now());
+
+  els.tripEditRows.innerHTML = tripItems.map((p) =>
+    html`<div class="receipt-row" data-id="${p.id}">
+      <button type="button" class="rr-del" data-act="trip-edit-del" aria-label="Ukloni">×</button>
+      <input class="rr-name" type="text" value="${p.name}" aria-label="Naziv" />
+      <div class="rr-nums">
+        <input class="rr-qty" type="text" value="${p.qty || ""}" placeholder="kol" aria-label="Količina" autocomplete="off" />
+        <input class="rr-price" type="text" inputmode="decimal" value="${p.price != null ? String(p.price) : ""}" placeholder="cijena" aria-label="Cijena" />
+      </div>
+    </div>`
+  ).join("");
+
+  els.tripEditModal.classList.remove("hidden");
+}
+
+export function closeTripEdit() {
+  els.tripEditModal.classList.add("hidden");
+  editTripItems = [];
+}
+
+export async function saveTripEdit() {
+  const rows = [...els.tripEditRows.querySelectorAll(".receipt-row")];
+  const sel = els.tripEditStores.querySelector(".store-chip.selected");
+  const store = sel ? sel.dataset.store : null;
+  const at = dateInputToMs(els.tripEditDate.value, Date.now());
+  try {
+    const batch = writeBatch(db);
+    for (const row of rows) {
+      const id = row.dataset.id;
+      if (row.dataset.deleted) {
+        batch.delete(doc(purchasesCol, id));
+        continue;
+      }
+      const name = row.querySelector(".rr-name").value.trim();
+      if (!name) continue;
+      batch.update(doc(purchasesCol, id), {
+        name,
+        qty: row.querySelector(".rr-qty").value.trim() || null,
+        store,
+        price: parsePrice(row.querySelector(".rr-price").value),
+        purchased_at: at,
+      });
+    }
+    await batch.commit();
+    closeTripEdit();
+    toast("Kupovina ažurirana ✓");
+  } catch (e) { console.error(e); setSync(false); }
+}
+
 export async function confirmReceipt() {
   const rows = [...els.receiptRows.querySelectorAll(".receipt-row")];
   const sel = els.receiptStores.querySelector(".store-chip.selected");

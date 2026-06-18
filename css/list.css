@@ -586,3 +586,19 @@
   line-height: 1.2;
 }
 .stat-lbl { font-size: 0.7rem; }
+
+/* ── "Uredi kupovinu" gumb u trip headeru ───────────────────── */
+.btn-edit-trip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+.btn-edit-trip .icn { width: 0.95em; height: 0.95em; }

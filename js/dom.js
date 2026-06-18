@@ -115,6 +115,12 @@ export const els = {
   priceList: $("price-list"),
   emptyHistory: $("empty-history"),
   historyList: $("history-list"),
+  tripEditModal: $("trip-edit-modal"),
+  tripEditStores: $("trip-edit-stores"),
+  tripEditDate: $("trip-edit-date"),
+  tripEditRows: $("trip-edit-rows"),
+  tripEditCancel: $("trip-edit-cancel"),
+  tripEditSave: $("trip-edit-save"),
 
   archiveModal: $("archive-modal"),
   archiveRows: $("archive-rows"),

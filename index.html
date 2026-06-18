@@ -262,6 +262,22 @@
     </div>
   </div>
 
+  <!-- ══════════ DIJALOG: uređivanje cijele kupovine ══════════ -->
+  <div id="trip-edit-modal" class="modal hidden">
+    <div class="modal-card">
+      <h2>Uredi kupovinu</h2>
+      <span class="picker-label">Dućan:</span>
+      <div id="trip-edit-stores" class="store-picker single"></div>
+      <span class="picker-label">Datum:</span>
+      <input id="trip-edit-date" class="sheet-input" type="date" />
+      <div id="trip-edit-rows"></div>
+      <div class="modal-actions">
+        <button id="trip-edit-cancel" class="btn-text">Odustani</button>
+        <button id="trip-edit-save" class="btn-add">Spremi sve ✓</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══════════ DIJALOG: skeniranje računa (OCR) ══════════ -->
   <div id="receipt-modal" class="modal hidden">
     <div class="modal-card">

@@ -5,7 +5,7 @@ import { APP_VERSION, state, setState, subscribe, DEFAULT_STORES, DEFAULT_CATEGO
 import { els } from "./js/dom.js";
 import { configured, itemsCol, purchasesCol, settingsDoc, onSnapshot } from "./js/firebase.js";
 import { setThemeChoice, setAccent } from "./js/theme.js";
-import { setSync, buildQty, sortStores, toast, aggregateByName, normKey } from "./js/util.js";
+import { setSync, buildQty, sortStores, toast, aggregateByName, normKey, tripKeyOf } from "./js/util.js";
 import { render } from "./js/render.js";
 import {
   newStores, addForm, initAddQty, renderAddUnits, renderStorePicker,
@@ -19,7 +19,7 @@ import {
   addItem, toggleBought, toggleStar, toggleRecurring, deleteItem, deleteHistory, repeatTrip,
   quickAdd, openArchiveModal, closeArchiveModal, confirmArchive,
 } from "./js/actions.js";
-import { handleReceiptFile, closeReceiptModal, confirmReceipt } from "./js/receipt.js";
+import { handleReceiptFile, closeReceiptModal, confirmReceipt, openTripEdit, closeTripEdit, saveTripEdit } from "./js/receipt.js";
 import { initVoice, toggleVoice } from "./js/voice.js";
 import { initSwipe, swipeGuard } from "./js/swipe.js";
 
@@ -111,6 +111,20 @@ if (configured) {
       if (!was) btn.classList.add("selected");
     }
     else if (act === "receipt-del") btn.closest(".receipt-row")?.remove();
+    else if (act === "trip-edit-store") {
+      const was = btn.classList.contains("selected");
+      els.tripEditStores.querySelectorAll(".store-chip").forEach((c) => c.classList.remove("selected"));
+      if (!was) btn.classList.add("selected");
+    }
+    else if (act === "trip-edit-del") {
+      const row = btn.closest(".receipt-row");
+      if (row) { row.dataset.deleted = "1"; row.style.display = "none"; }
+    }
+    else if (act === "edit-trip") {
+      const key = btn.dataset.trip;
+      const items = state.purchases.filter((p) => tripKeyOf(p) === key);
+      openTripEdit(key, items);
+    }
     else if (act === "qty-unit") {
       addForm.unit = addForm.unit === btn.dataset.unit ? "" : btn.dataset.unit;
       renderAddUnits();
@@ -175,6 +189,11 @@ if (configured) {
   els.receiptConfirm.addEventListener("click", confirmReceipt);
   els.receiptModal.addEventListener("click", (e) => {
     if (e.target === els.receiptModal) closeReceiptModal();
+  });
+  els.tripEditCancel.addEventListener("click", closeTripEdit);
+  els.tripEditSave.addEventListener("click", saveTripEdit);
+  els.tripEditModal.addEventListener("click", (e) => {
+    if (e.target === els.tripEditModal) closeTripEdit();
   });
   els.historySearch.addEventListener("input", (e) => {
     setState({ historyQuery: e.target.value });

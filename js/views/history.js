@@ -155,6 +155,7 @@ export function renderHistory() {
                   <div class="trip-header-main" data-act="toggle-trip" data-trip="${trip.key}">
                     <div class="muted-line">${raw(headParts.join(" · "))}</div>
                   </div>
+                  <button type="button" class="btn-edit-trip" data-act="edit-trip" data-trip="${trip.key}" aria-label="Uredi kupovinu">${icon("gear")} Uredi</button>
                   <button type="button" class="btn-repeat" data-act="repeat-trip" data-trip="${trip.key}" aria-label="Ponovi kupovinu">${icon("refresh")} Ponovi</button>
                   <span class="trip-chevron" data-act="toggle-trip" data-trip="${trip.key}">${icon("chevron")}</span>
                 </div>
