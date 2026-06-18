@@ -40,6 +40,7 @@ export const state = {
   view: "list",
   historyQuery: "",
   collapsedTrips: new Set(), // sklopljene grupe kupovina u povijesti (po trip ključu)
+  collapsedPriceCats: new Set(), // sklopljene kategorije u "Cijene po artiklu"
   // Način grupiranja liste: "none" | "store" | "category" (kompatibilno sa starom postavkom)
   groupMode: localStorage.getItem("groupMode") || (localStorage.getItem("groupByStore") === "1" ? "store" : "none"),
   priceGroupBy: localStorage.getItem("priceGroupBy") || "none", // grupiranje "Cijene po artiklu"

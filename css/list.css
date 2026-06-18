@@ -499,3 +499,22 @@
   color: var(--green);
   border-bottom-color: var(--green);
 }
+
+/* ── Collapse/expand kategorija u "Cijene po artiklu" ─────── */
+.price-cat-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  padding: 10px 4px 2px;
+}
+.cat-chevron .icn {
+  width: 1em;
+  height: 1em;
+  color: var(--muted);
+  transition: transform 0.2s;
+}
+.cat-chevron.collapsed .icn {
+  transform: rotate(-90deg);
+}

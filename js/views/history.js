@@ -55,11 +55,14 @@ export function renderHistory() {
       return (ia === -1 ? 98 : ia) - (ib === -1 ? 98 : ib) || a.localeCompare(b, "hr");
     });
     els.priceList.innerHTML = keys
-      .map(
-        (k) =>
-          html`<li class="group-head">${k} <span class="count">${buckets[k].length}</span></li>` +
-          buckets[k].map(priceStatHTML).join("")
-      )
+      .map((k) => {
+        const collapsed = state.collapsedPriceCats.has(k);
+        const items = collapsed ? "" : buckets[k].map(priceStatHTML).join("");
+        return html`<li class="group-head price-cat-head" data-act="toggle-price-cat" data-cat="${k}">
+              <span>${k} <span class="count">${buckets[k].length}</span></span>
+              <span class="cat-chevron ${collapsed ? "collapsed" : ""}">${icon("chevron")}</span>
+            </li>` + items;
+      })
       .join("");
   } else {
     els.priceList.innerHTML = stats.map(priceStatHTML).join("");

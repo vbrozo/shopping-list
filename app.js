@@ -113,6 +113,11 @@ if (configured) {
       state.collapsedTrips.has(key) ? state.collapsedTrips.delete(key) : state.collapsedTrips.add(key);
       render();
     }
+    else if (act === "toggle-price-cat") {
+      const cat = btn.dataset.cat;
+      state.collapsedPriceCats.has(cat) ? state.collapsedPriceCats.delete(cat) : state.collapsedPriceCats.add(cat);
+      render();
+    }
     else if (act === "repeat-trip") repeatTrip(btn.dataset.trip);
     else if (act === "quick") {
       quickAdd(btn.dataset.name, store);
