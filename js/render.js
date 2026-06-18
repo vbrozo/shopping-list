@@ -13,10 +13,10 @@ export function render() {
   els.viewHistory.classList.toggle("hidden", state.view !== "history");
   els.viewSettings.classList.toggle("hidden", state.view !== "settings");
   els.viewToggle.innerHTML = state.view === "list" ? icon("clock") : icon("cart");
-  els.appTitle.innerHTML =
-    state.view === "settings" ? `${icon("gear")} Postavke`
-      : state.view === "history" ? `${icon("clock")} Povijest`
-      : `${icon("cart")} Lista za kupovinu`;
+  els.appTitle.textContent =
+    state.view === "settings" ? "Postavke"
+      : state.view === "history" ? "Povijest"
+      : "Lista za kupovinu";
   if (state.view === "list") renderList();
   else if (state.view === "history") renderHistory();
   else renderSettings();
