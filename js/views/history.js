@@ -7,9 +7,12 @@ import { html, raw, aggregateByName, normKey, tripKeyOf, fmtDate, fmtPrice } fro
 // Jedna kartica u "Cijene po artiklu" (usporedba cijena po dućanu)
 function priceStatHTML(s) {
   const nameKey = normKey(s.name);
+  const onList = state.items.some((i) => normKey(i.name) === nameKey && !i.bought);
+  const addBtn = html`<button class="btn-add-to-list ${onList ? "on-list" : ""}" data-act="article-add" data-name="${s.name}" data-store="${s.prices.length ? Object.entries(s.perStore).sort((a, b) => a[1].min - b[1].min)[0][0] : ""}" aria-label="Dodaj na listu">${onList ? "✓" : icon("plus")}</button>`;
+
   if (s.prices.length === 0) {
-    return html`<li class="item" data-act="edit-article" data-key="${nameKey}"><div class="item-body"><div class="item-name">${s.name}</div>
-            <div class="muted-line">još bez cijene · ${s.count}× kupljeno</div></div></li>`;
+    return html`<li class="item" ><div class="item-body item-main" data-act="edit-article" data-key="${nameKey}"><div class="item-name">${s.name}</div>
+            <div class="muted-line">još bez cijene · ${s.count}× kupljeno</div></div>${raw(addBtn)}</li>`;
   }
   const entries = Object.entries(s.perStore).sort((a, b) => a[1].min - b[1].min);
   const cheapest = entries[0][0];
@@ -22,10 +25,10 @@ function priceStatHTML(s) {
               </div>`;
     })
     .join("");
-  return html`<li class="item col" data-act="edit-article" data-key="${nameKey}"><div class="item-body">
+  return html`<li class="item col"><div class="item-body item-main" data-act="edit-article" data-key="${nameKey}">
             <div class="item-name">${s.name}</div>
             <div class="price-table">${raw(rows)}</div>
-          </div></li>`;
+          </div>${raw(addBtn)}</li>`;
 }
 
 // ── Render: POVIJEST ───────────────────────────────────────────

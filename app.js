@@ -78,6 +78,10 @@ if (configured) {
     else if (act === "edit-hist") histEditor.open(id);
     else if (act === "hist-store") histEditor.toggleStore(store);
     else if (act === "hist-qty-unit") histEditor.toggleUnit(btn.dataset.unit);
+    else if (act === "article-add") {
+      const { name, store } = btn.dataset;
+      addItem(name, store ? [store] : [], null, false, null);
+    }
     else if (act === "edit-article") {
       const key = btn.dataset.key;
       const stat = Object.values(aggregateByName()).find((s) => normKey(s.name) === key);

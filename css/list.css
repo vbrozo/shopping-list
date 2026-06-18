@@ -233,7 +233,8 @@
 }
 
 /* Tablica cijena po dućanu (povijest) */
-.item.col { display: block; }
+.item.col { display: flex; align-items: flex-start; }
+.item.col .item-body { flex: 1; min-width: 0; }
 .price-table {
   margin-top: 6px;
   display: flex;
@@ -517,4 +518,26 @@
 }
 .cat-chevron.collapsed .icn {
   transform: rotate(-90deg);
+}
+
+/* ── "Dodaj na listu" gumb u Cijene po artiklu ──────────────── */
+.btn-add-to-list {
+  flex-shrink: 0;
+  align-self: center;
+  background: var(--green);
+  border: none;
+  color: #fff;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  margin-left: 8px;
+}
+.btn-add-to-list .icn { width: 1em; height: 1em; }
+.btn-add-to-list.on-list {
+  background: var(--border);
+  color: var(--muted);
+  cursor: default;
 }
