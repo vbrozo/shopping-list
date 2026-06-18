@@ -292,12 +292,6 @@
         <div id="hist-qty-units" class="qty-units"></div>
       </div>
 
-      <label class="sheet-label">Dućan</label>
-      <div id="hist-stores" class="store-picker"></div>
-
-      <label class="sheet-label">Kategorija</label>
-      <div id="hist-cats" class="store-picker single"></div>
-
       <label class="sheet-label">Cijena</label>
       <input id="hist-price" class="sheet-input" type="text" inputmode="decimal" placeholder="npr. 1,99" />
 
@@ -307,6 +301,23 @@
       <div class="modal-actions">
         <button id="hist-cancel" class="btn-text">Odustani</button>
         <button id="hist-save" class="btn-add">Spremi ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ BOTTOM-SHEET: uređivanje artikla (cijene po artiklu) ══════════ -->
+  <div id="article-sheet" class="modal hidden">
+    <div class="modal-card">
+      <h2>Uredi artikl</h2>
+      <label class="sheet-label">Naziv</label>
+      <input id="article-name" class="sheet-input" type="text" autocomplete="off" />
+
+      <label class="sheet-label">Kategorija</label>
+      <div id="article-cats" class="store-picker single"></div>
+
+      <div class="modal-actions">
+        <button id="article-cancel" class="btn-text">Odustani</button>
+        <button id="article-save" class="btn-add">Spremi ✓</button>
       </div>
     </div>
   </div>

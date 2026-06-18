@@ -6,8 +6,9 @@ import { html, raw, aggregateByName, normKey, tripKeyOf, fmtDate, fmtPrice } fro
 
 // Jedna kartica u "Cijene po artiklu" (usporedba cijena po dućanu)
 function priceStatHTML(s) {
+  const nameKey = normKey(s.name);
   if (s.prices.length === 0) {
-    return html`<li class="item"><div class="item-body"><div class="item-name">${s.name}</div>
+    return html`<li class="item" data-act="edit-article" data-key="${nameKey}"><div class="item-body"><div class="item-name">${s.name}</div>
             <div class="muted-line">još bez cijene · ${s.count}× kupljeno</div></div></li>`;
   }
   const entries = Object.entries(s.perStore).sort((a, b) => a[1].min - b[1].min);
@@ -21,7 +22,7 @@ function priceStatHTML(s) {
               </div>`;
     })
     .join("");
-  return html`<li class="item col"><div class="item-body">
+  return html`<li class="item col" data-act="edit-article" data-key="${nameKey}"><div class="item-body">
             <div class="item-name">${s.name}</div>
             <div class="price-table">${raw(rows)}</div>
           </div></li>`;

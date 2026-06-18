@@ -5,7 +5,7 @@ import { APP_VERSION, state, setState, subscribe, DEFAULT_STORES, DEFAULT_CATEGO
 import { els } from "./js/dom.js";
 import { configured, itemsCol, purchasesCol, settingsDoc, onSnapshot } from "./js/firebase.js";
 import { setThemeChoice, setAccent } from "./js/theme.js";
-import { setSync, buildQty, sortStores, toast } from "./js/util.js";
+import { setSync, buildQty, sortStores, toast, aggregateByName, normKey } from "./js/util.js";
 import { render } from "./js/render.js";
 import {
   newStores, addForm, initAddQty, renderAddUnits, renderStorePicker,
@@ -14,7 +14,7 @@ import {
 import {
   renderSettings, settingsState, addStore, addCategory, removeStore, removeCategory,
 } from "./js/views/settings.js";
-import { itemEditor, histEditor } from "./js/editors.js";
+import { itemEditor, histEditor, articleEditor } from "./js/editors.js";
 import {
   addItem, toggleBought, toggleStar, toggleRecurring, deleteItem, deleteHistory, repeatTrip,
   quickAdd, openArchiveModal, closeArchiveModal, confirmArchive,
@@ -76,8 +76,13 @@ if (configured) {
     else if (act === "edit-store") itemEditor.toggleStore(store);
     else if (act === "edit-qty-unit") itemEditor.toggleUnit(btn.dataset.unit);
     else if (act === "edit-hist") histEditor.open(id);
-    else if (act === "hist-store") histEditor.toggleStore(store);
     else if (act === "hist-qty-unit") histEditor.toggleUnit(btn.dataset.unit);
+    else if (act === "edit-article") {
+      const key = btn.dataset.key;
+      const stat = Object.values(aggregateByName()).find((s) => normKey(s.name) === key);
+      if (stat) articleEditor.open(stat);
+    }
+    else if (act === "article-cat") articleEditor.toggleCat(btn.dataset.cat);
     else if (act === "toggle-new-store") {
       addForm.storesTouched = true;
       newStores.has(store) ? newStores.delete(store) : newStores.add(store);
@@ -89,7 +94,6 @@ if (configured) {
       renderCatPicker();
     }
     else if (act === "edit-cat") itemEditor.toggleCat(btn.dataset.cat);
-    else if (act === "hist-cat") histEditor.toggleCat(btn.dataset.cat);
     else if (act === "archive-store") {
       const row = btn.closest(".archive-row");
       const was = btn.classList.contains("selected");
@@ -239,6 +243,13 @@ if (configured) {
   els.histCancel.addEventListener("click", histEditor.close);
   els.histSheet.addEventListener("click", (e) => {
     if (e.target === els.histSheet) histEditor.close();
+  });
+
+  // Editor artikla (Cijene po artiklu)
+  els.articleSave.addEventListener("click", articleEditor.save);
+  els.articleCancel.addEventListener("click", articleEditor.close);
+  els.articleSheet.addEventListener("click", (e) => {
+    if (e.target === els.articleSheet) articleEditor.close();
   });
 
   els.micBtn.addEventListener("click", toggleVoice);

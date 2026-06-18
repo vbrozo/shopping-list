@@ -4,9 +4,9 @@ import { state } from "./state.js";
 import { els } from "./dom.js";
 import {
   html, parseQty, unitChipsHTML, getStores, sortStores, catChipsHTML,
-  parsePrice, buildQty, msToDateInput, dateInputToMs, setSync, toast,
+  parsePrice, buildQty, msToDateInput, dateInputToMs, setSync, toast, normKey,
 } from "./util.js";
-import { db, doc, updateDoc } from "./firebase.js";
+import { db, doc, updateDoc, writeBatch } from "./firebase.js";
 
 // ── Generički editor bottom-sheeta ──────────────────────────────
 // Stavke imaju više dućana (multiStore) i nemaju datum; zapisi povijesti
@@ -118,7 +118,53 @@ export const histEditor = createEditor({
   findRecord: (id) => state.purchases.find((p) => p.id === id),
   fields: {
     name: els.histName, qtyValue: els.histQtyValue, qtyUnits: els.histQtyUnits,
-    stores: els.histStores, cats: els.histCats, price: els.histPrice, sheet: els.histSheet,
+    stores: { innerHTML: "" }, cats: { innerHTML: "" }, // placeholder — not shown in sheet
+    price: els.histPrice, sheet: els.histSheet,
     date: els.histDate,
   },
 });
+
+// ── Editor artikla: naziv + kategorija, batch update svih zapisa ─
+export const articleEditor = (() => {
+  let normName = null; // normKey po kojem pronalazimo sve zapise
+  let category = "";
+
+  function renderCats() {
+    els.articleCats.innerHTML = catChipsHTML(category, "article-cat");
+  }
+  function toggleCat(cat) {
+    category = category === cat ? "" : cat;
+    renderCats();
+  }
+  function open(stat) {
+    normName = normKey(stat.name);
+    els.articleName.value = stat.name;
+    category = state.CATEGORIES.includes(stat.category) ? stat.category : "";
+    renderCats();
+    els.articleSheet.classList.remove("hidden");
+  }
+  function close() {
+    els.articleSheet.classList.add("hidden");
+    normName = null;
+  }
+  async function save() {
+    if (!normName) return;
+    const newName = els.articleName.value.trim();
+    if (!newName) { toast("Naziv ne može biti prazan"); return; }
+    const toUpdate = state.purchases.filter((p) => normKey(p.name) === normName);
+    if (!toUpdate.length) { close(); return; }
+    try {
+      const batch = writeBatch(db);
+      for (const p of toUpdate) {
+        batch.update(doc(db, "purchases", p.id), {
+          name: newName,
+          category: category || null,
+        });
+      }
+      await batch.commit();
+      close();
+    } catch (e) { console.error(e); setSync(false); }
+  }
+
+  return { open, close, save, toggleCat };
+})();
