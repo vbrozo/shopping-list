@@ -14,7 +14,7 @@ function priceStatHTML(s) {
   const cheapest = entries[0][0];
   const rows = entries
     .map(([st, ps]) => {
-      const extra = ps.count > 1 ? ` <small>(min ${ps.min.toFixed(2)})</small>` : "";
+      const extra = ps.count > 1 ? raw(` <small>(min ${ps.min.toFixed(2)})</small>`) : "";
       return html`<div class="price-row ${st === cheapest ? "cheapest" : ""}">
                 <span>${st === cheapest ? raw(icon("star") + " ") : ""}${st}</span>
                 <span>${ps.last.toFixed(2)} €${extra}</span>
