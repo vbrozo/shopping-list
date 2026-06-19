@@ -1,5 +1,6 @@
 "use strict";
 
+import { state, setState } from "./state.js";
 import { els } from "./dom.js";
 import { haptic } from "./util.js";
 import { deleteItem, deleteHistory } from "./actions.js";
@@ -8,6 +9,9 @@ import { deleteItem, deleteHistory } from "./actions.js";
 let swipe = null;
 // Dijeljeno s globalnim click handlerom (spriječi "tap = kupljeno" odmah nakon swipea)
 export const swipeGuard = { suppressClickUntil: 0 };
+
+// ── Swipe za promjenu taba (lijevo/desno na view-list) ────────
+let tabSwipe = null;
 
 export function initSwipe() {
   document.addEventListener("touchstart", (e) => {
@@ -51,4 +55,23 @@ export function initSwipe() {
     }
     swipe = null;
   });
+
+  // ── Tab swipe na view-list (ignorira swipeable artikle) ──────
+  els.viewList.addEventListener("touchstart", (e) => {
+    if (e.target.closest(".item.swipeable")) return; // prepusti item swipeu
+    if (e.target.closest("button, input, select")) return;
+    tabSwipe = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, { passive: true });
+
+  els.viewList.addEventListener("touchend", (e) => {
+    if (!tabSwipe) return;
+    const dx = e.changedTouches[0].clientX - tabSwipe.x;
+    const dy = e.changedTouches[0].clientY - tabSwipe.y;
+    tabSwipe = null;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const tab = dx < 0 ? "list" : "add";
+    if (tab === state.listTab) return;
+    localStorage.setItem("listTab", tab);
+    setState({ listTab: tab });
+  }, { passive: true });
 }
